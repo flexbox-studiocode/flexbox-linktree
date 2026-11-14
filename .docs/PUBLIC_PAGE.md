@@ -101,6 +101,8 @@ Additional text/interaction values were derived from the palette to satisfy WCAG
 
 The footer surface is **blue** rather than graphite, by owner decision, so the closing block reads as part of the Flexbox brand instead of a grey band. It uses `--blue-strong` `#1F5F9D` rather than the brand blue `#3F83C4`: white text on `#3F83C4` measures only 4.0:1, which is below the 4.5:1 requirement for the footer's 11–15px text. On `#1F5F9D` the footer text measures 6.6:1 (brand name and nav links), 5.31:1 (tagline), and 6.07:1 (copyright), so the WCAG 2.2 AA target still holds.
 
+The footer navigation now mirrors the header: `Jelajahi` stays a plain white 14px/700 link, while `Mari terhubung` is rendered as a 14px/700 CTA card with a 6px radius. The CTA inverts the header card for contrast on the blue footer (white surface, `--blue-strong` text); its text contrast is 6.6:1. The tagline and copyright use white, with 600 weight, so they do not appear muted.
+
 This is a deliberate deviation from the graphite-footer rule in `.docs/Desain.md` section 8.5, recorded here as an approved owner decision.
 
 Typography:

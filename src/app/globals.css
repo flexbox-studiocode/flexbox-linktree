@@ -135,13 +135,21 @@ a.link-card:hover .link-card__arrow { transform: translate(2px, -2px); }
 .site-footer__inner { min-height: 180px; display: flex; flex-direction: column; justify-content: center; gap: 22px; padding-block: 32px; }
 .footer-brand { display: flex; align-items: center; gap: 11px; }
 .footer-brand__logo { width: 34px; height: auto; object-fit: contain; }
-.footer-brand__name { margin: 0; color: #fff; font-size: 15px; font-weight: 800; }
-.footer-brand__tagline { margin: 2px 0 0; color: #dce8f5; font-size: 13px; }
-.footer-nav { display: flex; gap: 18px; font-size: 14px; font-weight: 700; }
-.footer-nav a { min-height: 44px; display: inline-flex; align-items: center; }
-.footer-nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
-.footer-copyright { margin: 0; color: #dce8f5; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; }
+.footer-brand__name { margin: 0; color: #fff; font-size: 15px; font-weight: 800; letter-spacing: -.01em; }
+.footer-brand__tagline { margin: 2px 0 0; color: #fff; font-size: 13px; font-weight: 600; }
+.footer-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; }
+/* Mirrors `.site-nav`: a plain link plus the "Mari terhubung" CTA card. */
+.footer-nav__link,
+.footer-nav__cta { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.footer-nav__link { padding-inline: 12px; color: #fff; }
+.footer-nav__link:hover { text-decoration: underline; text-underline-offset: 4px; }
+.footer-nav__cta { gap: 7px; padding-inline: 14px; border-radius: 6px; background: #fff; color: var(--blue-strong); }
+.footer-nav__cta:hover { background: var(--blue-soft); }
+.footer-nav__cta-arrow { transition: transform 180ms ease; }
+.footer-nav__cta:hover .footer-nav__cta-arrow { transform: translate(2px, -2px); }
+.footer-copyright { margin: 0; color: #fff; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; font-weight: 600; }
 .site-footer :focus-visible { outline-color: #fff; }
+.site-footer .footer-nav__cta:focus-visible { outline-color: var(--ink); }
 
 @media (min-width: 600px) {
   .card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
@@ -165,6 +173,7 @@ a.link-card:hover .link-card__arrow { transform: translate(2px, -2px); }
   .brand__logo { width: 32px; }
   .brand__wordmark { font-size: 15px; }
   .site-nav__cta { padding-inline: 12px; font-size: 13px; }
+  .footer-nav__cta { padding-inline: 12px; font-size: 13px; }
   .hero__stripe { margin-bottom: 23px; font-size: 9px; letter-spacing: .08em; }
 }
 

@@ -22,8 +22,15 @@ export default function SiteFooter({ year }: { year: number }) {
         </div>
 
         <nav aria-label="Navigasi footer" className="footer-nav">
-          <a href={publicAnchors.directory}>{siteContent.headerNavLabel}</a>
-          <a href={publicAnchors.contact}>{siteContent.contactNavLabel}</a>
+          <a className="footer-nav__link" href={publicAnchors.directory}>
+            {siteContent.headerNavLabel}
+          </a>
+          <a className="footer-nav__cta" href={publicAnchors.contact}>
+            {siteContent.headerCtaLabel}
+            <span aria-hidden="true" className="footer-nav__cta-arrow">
+              ↗
+            </span>
+          </a>
         </nav>
 
         <p className="footer-copyright">
