@@ -63,7 +63,7 @@ img { display: block; }
 .site-header { position: sticky; z-index: 10; top: 0; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--page) 94%, transparent); backdrop-filter: blur(10px); }
 .site-header__inner { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .brand { min-height: 44px; display: flex; align-items: center; gap: 9px; }
-.brand__logo { width: 37px; height: 37px; object-fit: contain; }
+.brand__logo { width: 37px; height: auto; object-fit: contain; }
 .brand__text { display: grid; line-height: 1; }
 .brand__wordmark { color: var(--ink); font-size: 16px; font-weight: 800; letter-spacing: -.04em; }
 .brand__suffix { margin-top: 3px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
@@ -134,7 +134,7 @@ a.link-card:hover .link-card__arrow { transform: translate(2px, -2px); }
 .site-footer { background: var(--footer); color: #edf2f8; }
 .site-footer__inner { min-height: 180px; display: flex; flex-direction: column; justify-content: center; gap: 22px; padding-block: 32px; }
 .footer-brand { display: flex; align-items: center; gap: 11px; }
-.footer-brand__logo { width: 34px; height: 34px; object-fit: contain; }
+.footer-brand__logo { width: 34px; height: auto; object-fit: contain; }
 .footer-brand__name { margin: 0; color: #fff; font-size: 15px; font-weight: 800; }
 .footer-brand__tagline { margin: 2px 0 0; color: #d6dee9; font-size: 13px; }
 .footer-nav { display: flex; gap: 18px; font-size: 14px; font-weight: 700; }
