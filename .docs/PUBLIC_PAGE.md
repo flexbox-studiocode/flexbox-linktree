@@ -97,6 +97,12 @@ Palette (from `.docs/Desain.md`):
 
 Additional text/interaction values were derived from the palette to satisfy WCAG AA contrast and are intentionally limited to: `--ink` `#272E38`, `--muted` `#596574`, `--blue-strong` `#1F5F9D`, `--line` `#D7E0EC`, `--line-strong` `#B9C9DC`.
 
+### Footer surface
+
+The footer surface is **blue** rather than graphite, by owner decision, so the closing block reads as part of the Flexbox brand instead of a grey band. It uses `--blue-strong` `#1F5F9D` rather than the brand blue `#3F83C4`: white text on `#3F83C4` measures only 4.0:1, which is below the 4.5:1 requirement for the footer's 11–15px text. On `#1F5F9D` the footer text measures 6.6:1 (brand name and nav links), 5.31:1 (tagline), and 6.07:1 (copyright), so the WCAG 2.2 AA target still holds.
+
+This is a deliberate deviation from the graphite-footer rule in `.docs/Desain.md` section 8.5, recorded here as an approved owner decision.
+
 Typography:
 
 - Display: **Anton** (approved) via `next/font/google`, self-hosted at build time.

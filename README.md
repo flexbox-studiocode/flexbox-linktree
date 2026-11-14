@@ -16,7 +16,7 @@ The public experience is deliberately a microsite, not an application dashboard.
 Implemented at this point:
 
 - Next.js App Router application with TypeScript (strict) and Tailwind CSS v4.
-- Public Flexbox Studio Digital Hub: header, hero, editorial directory with eight curated cards, contact call-to-action, and graphite footer.
+- Public Flexbox Studio Digital Hub: header, hero, editorial directory with eight curated cards, contact call-to-action, and **blue** graphite footer.
 - Safe destination handling through `src/lib/utils/url.ts`; unconfirmed destinations render as non-interactive "Segera" cards rather than invented links.
 - Self-hosted Anton (display) and Manrope (body fallback) through `next/font`.
 - Page metadata, favicon, and `/robots.txt`.

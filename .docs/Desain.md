@@ -89,6 +89,7 @@ Bagian ini mencatat kondisi nyata setelah Phase 2, bukan mengubah aturan desain 
 | Kontak | `mailto:` tidak dipublikasikan karena alamat belum terverifikasi; bagian kontak menampilkan label status |
 | Tujuan tautan | Enam tujuan belum terverifikasi sehingga tampil sebagai kartu non-aktif bertanda “Segera” |
 | Verifikasi visual | Figma tidak dapat diakses dari browser lokal saat Phase 2; acuan yang dipakai hanya dokumen ini dan screenshot pemilik |
+| Footer | Permukaan footer memakai biru `#1F5F9D` dengan teks putih, bukan graphite. Ini keputusan pemilik agar terlihat lebih hidup; nilai ini dipilih karena teks putih di atas biru brand `#3F83C4` hanya mencapai kontras 4.0:1 |
 
 ## 4. Prinsip visual
 
