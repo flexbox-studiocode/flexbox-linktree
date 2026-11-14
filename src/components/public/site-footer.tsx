@@ -10,7 +10,8 @@ export default function SiteFooter({ year }: { year: number }) {
           <Image
             alt=""
             className="footer-brand__logo"
-            height={32}
+            height={36}
+            sizes="34px"
             src="/assets/flexbox-logo.png"
             width={32}
           />

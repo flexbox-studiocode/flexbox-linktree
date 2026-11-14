@@ -12,6 +12,7 @@ export default function SiteHeader() {
             className="brand__logo"
             height={38}
             priority
+            sizes="37px"
             src="/assets/flexbox-logo.png"
             width={36}
           />

@@ -47,10 +47,9 @@ export const metadata: Metadata = {
       "Direktori digital Flexbox Studio: produk, proyek, sumber daya, komunitas, dan kontak dalam satu tempat.",
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "Flexbox Studio — Digital Hub",
-    description:
-      "Direktori digital Flexbox Studio dalam satu halaman.",
+    description: "Direktori digital Flexbox Studio dalam satu halaman.",
   },
 };
 
