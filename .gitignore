@@ -1,0 +1,29 @@
+
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+build/
+
+# Testing
+coverage/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Operating system
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+
+# Local storage
+.local-storage/

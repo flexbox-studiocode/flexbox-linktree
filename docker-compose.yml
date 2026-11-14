@@ -1,0 +1,28 @@
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: flexbox-linktree-db
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: flexbox
+      POSTGRES_PASSWORD: dev-only-password
+      POSTGRES_DB: flexbox_linktree_dev
+
+    ports:
+      - "127.0.0.1:5433:5432"
+
+    volumes:
+      - flexbox_linktree_pgdata:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U flexbox -d flexbox_linktree_dev
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  flexbox_linktree_pgdata:

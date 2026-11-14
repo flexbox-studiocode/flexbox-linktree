@@ -1,0 +1,227 @@
+# Repository Structure Specification
+
+**Project:** Flexbox Linktree  
+**Status:** Proposed structure for implementation  
+**Language:** English
+
+## 1. Structure Principles
+
+- Keep public UI, admin UI, business logic, infrastructure, and database schema clearly separated.
+- Organize by product feature/domain where appropriate.
+- Keep Next.js route files thin; business rules belong in feature/service modules.
+- Use Server Components by default and Client Components only for interactive UI.
+- Keep secrets, local data, generated files, and production uploads out of Git.
+- Preserve the existing `.docs/Desain.md` and `.flexbox/LogoFlexBox.png` assets.
+
+## 2. Proposed Repository Tree
+
+```text
+flexbox-linktree/
+├── .docs/
+│   ├── Desain.md
+│   ├── Architecture.md
+│   ├── PRD.md
+│   ├── Roadmap.md
+│   ├── Tech-Stack.md
+│   ├── Structure_File.md
+│   └── LOCAL_DEVELOPMENT.md
+│
+├── .flexbox/
+│   └── LogoFlexBox.png
+│
+├── prisma/
+│   ├── schema.prisma
+│   ├── migrations/
+│   └── seed.ts
+│
+├── public/
+│   ├── favicon.ico
+│   ├── robots.txt
+│   └── assets/
+│       └── flexbox-logo.png
+│
+├── src/
+│   ├── app/
+│   │   ├── (public)/
+│   │   │   ├── page.tsx
+│   │   │   ├── layout.tsx
+│   │   │   └── loading.tsx
+│   │   │
+│   │   ├── admin/
+│   │   │   ├── login/
+│   │   │   │   └── page.tsx
+│   │   │   ├── (protected)/
+│   │   │   │   ├── layout.tsx
+│   │   │   │   ├── page.tsx
+│   │   │   │   ├── links/
+│   │   │   │   │   ├── page.tsx
+│   │   │   │   │   ├── new/page.tsx
+│   │   │   │   │   └── [id]/page.tsx
+│   │   │   │   ├── categories/page.tsx
+│   │   │   │   ├── media/page.tsx
+│   │   │   │   ├── settings/page.tsx
+│   │   │   │   ├── analytics/
+│   │   │   │   │   ├── page.tsx
+│   │   │   │   │   ├── links/page.tsx
+│   │   │   │   │   └── audience/page.tsx
+│   │   │   │   ├── admins/page.tsx
+│   │   │   │   └── audit-logs/page.tsx
+│   │   │   └── layout.tsx
+│   │   │
+│   │   ├── api/
+│   │   │   ├── auth/[...nextauth]/route.ts
+│   │   │   ├── analytics/page-view/route.ts
+│   │   │   ├── analytics/click/[linkId]/route.ts
+│   │   │   └── health/route.ts
+│   │   │
+│   │   ├── globals.css
+│   │   └── layout.tsx
+│   │
+│   ├── components/
+│   │   ├── public/
+│   │   │   ├── header.tsx
+│   │   │   ├── hero.tsx
+│   │   │   ├── directory.tsx
+│   │   │   ├── link-card.tsx
+│   │   │   ├── contact-cta.tsx
+│   │   │   └── footer.tsx
+│   │   ├── admin/
+│   │   │   ├── sidebar.tsx
+│   │   │   ├── admin-header.tsx
+│   │   │   ├── data-table.tsx
+│   │   │   ├── status-badge.tsx
+│   │   │   └── analytics/
+│   │   └── shared/
+│   │       ├── form-field.tsx
+│   │       ├── confirm-dialog.tsx
+│   │       └── empty-state.tsx
+│   │
+│   ├── features/
+│   │   ├── auth/
+│   │   │   ├── actions/
+│   │   │   ├── services/
+│   │   │   ├── schemas/
+│   │   │   └── types.ts
+│   │   ├── links/
+│   │   │   ├── actions/
+│   │   │   ├── queries/
+│   │   │   ├── services/
+│   │   │   ├── schemas/
+│   │   │   └── types.ts
+│   │   ├── categories/
+│   │   ├── settings/
+│   │   ├── media/
+│   │   └── analytics/
+│   │       ├── collectors/
+│   │       ├── queries/
+│   │       ├── services/
+│   │       ├── schemas/
+│   │       └── types.ts
+│   │
+│   ├── lib/
+│   │   ├── auth/
+│   │   ├── prisma/
+│   │   ├── storage/
+│   │   ├── validation/
+│   │   ├── security/
+│   │   ├── analytics/
+│   │   ├── env/
+│   │   └── utils/
+│   │
+│   └── types/
+│
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── e2e/
+│
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+│
+├── .dockerignore
+├── .env.example
+├── .gitignore
+├── .nvmrc
+├── AGENTS.md
+├── Dockerfile
+├── docker-compose.yml
+├── next.config.ts
+├── package.json
+├── pnpm-lock.yaml
+├── postcss.config.mjs
+├── prisma.config.ts
+├── README.md
+└── tsconfig.json
+```
+
+This is a target structure, not a claim that these files already exist. Add directories when the corresponding feature is implemented; do not create dozens of empty files solely to match the diagram.
+
+## 3. Directory Responsibilities
+
+### `.docs/`
+Product, design, architecture, roadmap, stack, and local setup documentation. `Desain.md` remains the visual reference for the public page.
+
+### `.flexbox/`
+Original Flexbox brand assets and internal reference material. Copy approved web-ready assets into `public/assets/` when needed; preserve the original source asset.
+
+### `prisma/`
+Prisma schema, committed database migrations, and development seed data. Never place production database dumps or secrets here.
+
+### `src/app/`
+Next.js route definitions, layouts, loading/error boundaries, and narrow route handlers. Keep page components focused on composition and data loading.
+
+### `src/components/`
+Reusable presentation components. Separate public and admin components because their visual systems and interaction requirements differ.
+
+### `src/features/`
+Domain-oriented application logic. Each feature owns its validation schemas, services, queries, and actions where applicable.
+
+### `src/lib/`
+Shared infrastructure adapters and cross-cutting concerns: Auth.js, Prisma singleton/client, storage, environment validation, authorization, security, and utilities.
+
+### `tests/`
+Unit tests for pure logic, integration tests for database-backed services, and end-to-end tests for public/admin journeys.
+
+### `.github/workflows/`
+Continuous integration checks such as install, lint, typecheck, tests, and build. Deployment workflows must not expose secrets or bypass release approval.
+
+## 4. Naming Conventions
+
+- Components: PascalCase filenames where the repository convention supports it, otherwise consistent kebab-case; do not mix styles arbitrarily.
+- Functions and variables: camelCase.
+- Types and interfaces: PascalCase.
+- Database models: PascalCase singular; database table/column mapping may use snake_case consistently.
+- Environment variables: UPPER_SNAKE_CASE.
+- Route segments: lowercase kebab-case.
+- Feature directories: lowercase plural or domain name, used consistently.
+
+## 5. Files That Must Not Be Committed
+
+At minimum, ignore:
+
+```gitignore
+node_modules/
+.next/
+out/
+build/
+coverage/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+```
+
+Also ignore local-only database dumps, temporary uploads, generated secrets, and storage directories unless a specific fixture is intentionally committed. Do not ignore Prisma migrations or the pnpm lockfile.
+
+## 6. Import and Dependency Rules
+
+- Use the configured `@/` alias consistently.
+- Avoid circular dependencies between feature modules.
+- Domain features may depend on shared `lib` infrastructure; `lib` must not import UI components.
+- Keep Prisma calls inside server-only query/service modules.
+- Do not import server-only modules into Client Components.
+- Do not place secrets or database clients in files marked with `"use client"`.
+- Keep public components independent of admin navigation and admin-only data.
