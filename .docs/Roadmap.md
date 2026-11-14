@@ -26,30 +26,35 @@ Tasks:
 - [x] Confirm advanced privacy-conscious analytics.
 - [x] Confirm published-only public preview behavior.
 - [x] Inspect current local PostgreSQL setup and terminal output.
-- [ ] Review and approve PRD, architecture, stack, roadmap, agent rules, and file structure.
-- [ ] Decide Auth.js provider/session strategy.
-- [ ] Decide initial production media storage provider.
+- [x] Normalize documentation locations and reconcile cross-document consistency.
+- [x] Review and approve PRD, architecture, stack, roadmap, agent rules, and file structure.
+- [x] Decide Auth.js provider/session strategy (Credentials + JWT, NextAuth v4).
+- [x] Decide media storage strategy (local filesystem in development, S3-compatible in production).
 - [ ] Verify final domain, email, social URLs, and public copy.
 
 **Exit criteria:** all decisions affecting foundations are recorded and approved.
+
+Phase 0 status: complete for all foundation-affecting decisions. Verification of real public domains, contact addresses, social destinations, and final copy remains open on purpose — those are content decisions, not engineering blockers, and no values may be invented. They must be settled before the public page ships in Phase 2.
 
 ## Phase 1 — Local Environment and Project Foundation
 
 **Goal:** Create a reproducible Next.js development environment on the developer workstation.
 
 Tasks:
-- [ ] Verify Docker Desktop is running and PostgreSQL container is healthy.
-- [ ] Verify Node.js LTS and pnpm versions.
-- [ ] Create the Next.js App Router project with TypeScript and Tailwind CSS v4.
-- [ ] Add `.gitignore`, `.env.example`, local environment setup, and package scripts.
-- [ ] Keep `.env.local` out of Git.
-- [ ] Add Prisma using a single stable major version and its matching configuration.
-- [ ] Configure Prisma to connect to local PostgreSQL on host port `5433`.
-- [ ] Create a minimal initial migration and test database connectivity.
-- [ ] Add lint, typecheck, test, and build scripts.
-- [ ] Document repeatable setup and reset instructions.
+- [x] Verify Docker Desktop is running and PostgreSQL container is healthy.
+- [x] Verify Node.js LTS and pnpm versions.
+- [x] Create the Next.js App Router project with TypeScript and Tailwind CSS v4.
+- [x] Add `.gitignore`, `.env.example`, local environment setup, and package scripts.
+- [x] Keep `.env.local` out of Git.
+- [x] Add Prisma using a single stable major version and its matching configuration (Prisma 7.10.1, `prisma7.config.ts`).
+- [x] Configure Prisma to connect to local PostgreSQL on host port `5433`.
+- [x] Create a minimal initial migration and test database connectivity.
+- [x] Add lint, typecheck, test, and build scripts.
+- [x] Document repeatable setup and reset instructions.
 
 **Exit criteria:** the app starts locally, PostgreSQL is healthy, Prisma can migrate/query local data, and the production build passes.
+
+Phase 1 status: **complete and verified.** See `.docs/LOCAL_DEVELOPMENT.md` for the exact commands and recorded results.
 
 ## Phase 2 — Public User Page
 
@@ -67,6 +72,8 @@ Tasks:
 - [ ] Verify mobile, tablet, desktop, keyboard, reduced motion, and contrast.
 
 **Exit criteria:** public page renders correctly from database content and has no draft leakage.
+
+Note: final public domain, email, social destinations, and copy must be confirmed before this phase ships. Removing the Phase 1 placeholder page is part of this phase.
 
 ## Phase 3 — Content Database and CMS Foundation
 
@@ -87,8 +94,10 @@ Tasks:
 
 **Goal:** Restrict the CMS to approved Flexbox members.
 
+Recorded strategy: Auth.js / NextAuth v4 Credentials provider with JWT sessions. Provisioning is internal; Argon2id password hashing; server-side authorization on every protected read and mutation.
+
 Tasks:
-- [ ] Choose Auth.js provider and session strategy.
+- [x] Choose Auth.js provider and session strategy (Credential + JWT, NextAuth v4).
 - [ ] Implement invitation/allowlist provisioning.
 - [ ] Implement Super Admin account status and role checks.
 - [ ] Protect admin layouts, route handlers, server actions, and data services.
@@ -184,6 +193,20 @@ Potential follow-up work, only after observing real usage:
 - Separate database server when VPS resource usage justifies it.
 - Redis or a queue if background tasks or event volume demand it.
 - Multi-server deployment and disaster recovery improvements.
+
+## Progress Summary
+
+| Phase | Status |
+|---|---|
+| Phase 0 — Product and Documentation Baseline | Complete |
+| Phase 1 — Local Environment and Project Foundation | Complete |
+| Phase 2 — Public User Page | Not started |
+| Phase 3 — Content Database and CMS Foundation | Not started |
+| Phase 4 — Authentication and Authorization | Not started |
+| Phase 5 — Full CMS | Not started |
+| Phase 6 — Advanced Analytics | Not started |
+| Phase 7 — Quality, Security, and Release Readiness | Not started |
+| Phase 8 — VPS Deployment and Production | Not started |
 
 ## Release Gates
 

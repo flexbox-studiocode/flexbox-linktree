@@ -110,14 +110,38 @@ Auth.js handles authentication/session integration. Application authorization ch
 
 Do not rely solely on middleware or client-side route hiding. Middleware/proxy can provide an early redirect, but it is not the only authorization boundary.
 
-**Provider/session decision:**
-- For OAuth/email providers, use a compatible Auth.js Prisma adapter and database sessions where supported.
-- For Credentials provider, explicitly implement password verification and use JWT session strategy as required by Auth.js Credentials behavior. A Prisma adapter does not automatically persist Credentials users or convert Credentials sessions to database sessions.
-- Confirm one path before implementing account provisioning.
+**Provider/session decision (recorded):**
+
+The approved strategy is the **Auth.js Credentials provider with JWT sessions**, using the stable NextAuth v4 line that declares support for Next.js 16.
+
+Rationale:
+
+- The administrator population is a small, fixed, explicitly allowlisted Flexbox team. There is no public registration and no self-service onboarding.
+- No external OAuth identity provider or client credentials are available, and requiring one would add an undecided external prerequisite for every administrator.
+- Credentials keeps account provisioning internal: a `SUPER_ADMIN` creates or seeds the account, and the application owns the full access lifecycle.
+- Auth.js Credentials requires the JWT session strategy. A Prisma adapter does not persist Credentials users and does not convert Credentials sessions into database sessions. Therefore the application must implement account lookup, password verification, rate limiting, and provisioning explicitly.
+
+Consequences that must be implemented in the authentication phase:
+
+- An application-owned admin identity record (allowlist membership, `SUPER_ADMIN` role, active/inactive state) is the authorization source of truth. The Auth.js user object is only an authentication artifact.
+- Passwords are hashed with Argon2id and never logged or returned.
+- `AUTH_SECRET` signs JWT sessions and must be unique per environment.
+- Session revocation relies on short JWT lifetimes plus an active-status check on every protected request, not on deleting a database session row.
+- MFA is a later enhancement. Until then, login rate limiting and strong password policy are mandatory.
+
+Rejected alternative: OAuth provider with the Prisma adapter and database sessions. It is a reasonable design for larger organizations, but it adds an external identity-provider dependency that is not available for this release. The architecture stays compatible with that option because authorization is enforced by the application allowlist, not by the Auth.js adapter.
 
 ### 6.3 Media
 
 Use a storage interface so local storage and production object storage can be swapped without changing CMS business logic. Store metadata and storage keys in PostgreSQL; store binary files in persistent/object storage, not as database blobs by default.
+
+**Storage decision (recorded):**
+
+- **Local development:** a `LocalStorageAdapter` writes to the ignored `storage/uploads/` directory. The directory is persistent across Next.js restarts but is local-only and never committed.
+- **Production:** use an S3-compatible object-storage provider with a separate backup and lifecycle policy. The provider, bucket, region, endpoint, and credentials remain deployment decisions and are not required for Phase 0 or Phase 1.
+- **Boundary:** CMS code depends on the storage interface, not a provider SDK. Only a storage adapter reads provider-specific configuration.
+
+This decision avoids external credentials during foundation work while preventing production media from being placed in an ephemeral application container.
 
 ### 6.4 Analytics
 
@@ -225,3 +249,18 @@ Persistent Docker volumes protect against container replacement, not VPS loss. A
 ## 14. Design Document Relationship
 
 `.docs/Desain.md` remains the primary visual design guide for the public microsite. This architecture and the approved PRD extend the product scope to include the private CMS, authentication, PostgreSQL, and analytics. Where the earlier design document says that admin, login, database, or CMS are not product goals, the newer approved product requirements supersede that scope statement. Its visual rules, public-page hierarchy, typography, color, responsiveness, and accessibility guidance remain applicable unless explicitly revised.
+
+`Desain.md` is preserved in its original Indonesian language and is not rewritten. It still references the earlier Vite/React prototype (`src/App.tsx`, `src/index.css`, `src/main.tsx`, `index.html`) and a small starter `LinkItem` shape. Those implementation references are historical. The normative parts — brand palette, typography rules, spacing scale, editorial directory behavior, link-card anatomy, accessibility targets, and prohibited visual patterns — apply to the Next.js `src/app/(public)` implementation.
+
+## 15. Document Map
+
+| Document | Authority |
+|---|---|
+| `.docs/PRD.md` | Functional scope and acceptance criteria (authoritative) |
+| `.docs/Architecture.md` | System boundaries, data flow, and recorded technical decisions |
+| `.docs/Tech-Stack.md` | Selected technologies, versions, and version policy |
+| `.docs/Structure_File.md` | Repository layout and import conventions |
+| `.docs/Roadmap.md` | Phases and measurable exit criteria |
+| `.docs/Desain.md` | Public visual system (original form preserved) |
+| `.docs/LOCAL_DEVELOPMENT.md` | Repeatable local Windows setup |
+| `AGENTS.md` | Operative implementation rules for contributors and assistants |

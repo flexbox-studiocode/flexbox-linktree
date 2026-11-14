@@ -15,6 +15,49 @@
 
 ## 2. Proposed Repository Tree
 
+The tree below is the **target structure** for the full product. Sections marked "current" describe what exists after Phase 1.
+
+### 2.1 Current state (after Phase 1)
+
+```text
+flexbox-linktree/
+├── .docs/                       # normalized documentation (Phase 0)
+├── .flexbox/LogoFlexBox.png     # original brand source asset
+├── prisma/
+│   ├── schema.prisma            # Prisma 7 schema, SystemCheck model
+│   ├── migrations/              # committed migrations (init)
+│   └── check.ts                 # local connectivity/query check
+├── public/assets/flexbox-logo.png
+├── scripts/readiness.test.ts    # foundation unit test
+├── src/
+│   ├── app/                     # layout.tsx, page.tsx, globals.css
+│   ├── components/
+│   ├── features/
+│   ├── generated/prisma/        # generated Prisma Client (git-ignored)
+│   ├── lib/
+│   │   ├── prisma/client.ts
+│   │   └── system-check.ts
+│   └── types/
+├── AGENTS.md
+├── README.md
+├── docker-compose.yml
+├── eslint.config.mjs
+├── next.config.ts
+├── package.json
+├── pnpm-lock.yaml
+├── pnpm-workspace.yaml
+├── prisma7.config.ts            # Prisma 7 CLI configuration
+├── tsconfig.json
+├── vitest.config.ts
+├── .env.example
+├── .nvmrc
+└── .gitignore
+```
+
+`src/components` and `src/features` exist with a `.gitkeep` and their intended purpose documented; they are created now so feature work does not restructure the tree mid-phase.
+
+### 2.2 Target structure
+
 ```text
 flexbox-linktree/
 ├── .docs/
@@ -150,10 +193,15 @@ flexbox-linktree/
 ├── package.json
 ├── pnpm-lock.yaml
 ├── postcss.config.mjs
-├── prisma.config.ts
+├── prisma7.config.ts
 ├── README.md
 └── tsconfig.json
 ```
+
+Notes:
+
+- Tailwind CSS v4 in this project is integrated through `@tailwindcss/turbopack` and `next.config.ts`, so a separate `postcss.config.mjs` is not required and is not present.
+- The Prisma CLI configuration file is `prisma7.config.ts`, not `prisma.config.ts`, because Prisma 7 uses the versioned config filename by default.
 
 This is a target structure, not a claim that these files already exist. Add directories when the corresponding feature is implemented; do not create dozens of empty files solely to match the diagram.
 
@@ -215,6 +263,8 @@ Thumbs.db
 ```
 
 Also ignore local-only database dumps, temporary uploads, generated secrets, and storage directories unless a specific fixture is intentionally committed. Do not ignore Prisma migrations or the pnpm lockfile.
+
+Additionally ignored in this repository: `src/generated/prisma/` (generated Prisma Client), `storage/uploads/` (local media), `.local-storage/`, `*.tsbuildinfo`, `next-env.d.ts`, and local database dumps (`*.dump`, `*.sql.gz`).
 
 ## 6. Import and Dependency Rules
 

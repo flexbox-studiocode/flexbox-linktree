@@ -8,18 +8,22 @@
 
 | Layer | Technology | Status | Responsibility |
 |---|---|---|---|
-| Web framework | Next.js App Router | Selected | Public site, admin CMS, server rendering, route handlers |
-| Language | TypeScript | Selected | Type-safe application code |
-| UI library | React (managed by Next.js) | Required by framework | Component model |
-| Styling | Tailwind CSS v4 | Selected | Utility-first styling and design tokens |
-| Database | PostgreSQL | Selected | Persistent application and analytics data |
-| ORM | Prisma ORM | Selected | Schema, queries, and migrations |
-| Authentication | Auth.js / NextAuth | Selected | Sign-in and session integration |
-| Package manager | pnpm | Selected for local setup | Dependency management and scripts |
-| Container | Docker / Docker Compose | Selected | Local PostgreSQL and deployment packaging |
-| VPS deployment | Coolify | Planned | Application deployment and service management |
+| Web framework | Next.js 16.4.6 App Router | Selected | Public site, admin CMS, server rendering, route handlers |
+| Language | TypeScript 5.9.3 (strict mode) | Selected | Type-safe application code |
+| UI library | React 19.3.0 (managed by Next.js) | Selected | Component model |
+| Styling | Tailwind CSS v4.3.3 | Selected | Utility-first styling and design tokens |
+| Database | PostgreSQL 17 (`postgres:17-alpine` locally) | Selected | Persistent application and analytics data |
+| ORM | Prisma ORM 7.10.1 | Selected | Schema, queries, and migrations |
+| PostgreSQL driver | `pg` + `@prisma/adapter-pg` 7.10.1 | Required by Prisma 7 | Runtime database adapter |
+| Authentication | Auth.js / NextAuth 4.24.15 Credentials provider, JWT sessions | Selected | Internal sign-in and session integration |
+| Password hashing (auth phase) | Argon2id (`argon2`) | Selected | Password storage and verification |
+| Package manager | pnpm 12.18.0 | Selected | Dependency management and scripts |
+| Container | Docker 29.8.2 / Compose 5.5.1 locally | Selected | Local PostgreSQL |
+| VPS deployment | Coolify | Planned, not implemented | Future application deployment and service management |
 
-Use supported stable releases at project bootstrap. Do not copy version numbers from old tutorials without checking compatibility between Next.js, Node.js, Prisma, Auth.js, Tailwind CSS, and deployment runtime. Commit the lockfile and use the same Node.js major version in local and production environments.
+Version policy is validated against official package compatibility metadata and documentation checked during Phase 0: Next.js 16.4.6 requires Node.js >=20.9.0 and supports React 19. Prisma 7.10.1's install scripts explicitly support Node.js 20.19+, 22.12+, and 24+. The project uses the current Active LTS Node.js 26.13.0 (codename Lithium); Next.js supports it and Prisma CLI was successfully run on it. The `.nvmrc` file and `package.json` engines pin the Node 26 major. Node 24 is an officially supported Prisma alternative; do not downgrade the owner's machine automatically.
+
+pnpm is pinned at `12.18.0` through the `packageManager` field in `package.json`, with Corepack as the optional version activation mechanism. Use exact dependency versions and commit `pnpm-lock.yaml`. `package.json` `engines` declares the supported Node range. Do not copy version numbers from old tutorials without checking compatibility between framework, Node.js, Prisma, Auth.js, Tailwind CSS, and the deployment runtime. Review release notes before upgrades.
 
 ## 2. Core Technology Notes
 
@@ -43,12 +47,11 @@ Prisma major versions may change configuration and driver-adapter requirements. 
 
 ### 2.5 Auth.js / NextAuth
 
-Auth.js is the selected authentication integration. The provider and session strategy remain an implementation decision that must be closed before authentication is coded:
+**Selected implementation:** Auth.js / NextAuth Credentials provider with JWT sessions, using the stable NextAuth v4 release line compatible with Next.js 16. The small internal admin team will be provisioned explicitly; no OAuth provider credentials or external identity system are prerequisites.
 
-- OAuth/email provider + Prisma adapter: can use database-backed sessions where supported.
-- Credentials provider: application must verify credentials and provision users; Auth.js Credentials uses JWT sessions. It does not automatically persist credentials users through the adapter.
+Auth.js Credentials does not automatically persist users through the Prisma adapter and requires JWT sessions. The application must own the admin allowlist, account provisioning, account lookup, Argon2id password verification, rate limiting, and per-request active `SUPER_ADMIN` authorization checks. The Prisma adapter is not used for Credentials authentication. No public sign-up is provided.
 
-No public sign-up. Enforce an allowlist of active Flexbox members and the `SUPER_ADMIN` application role on the server.
+OAuth with a Prisma adapter and database sessions remains an option for a later phase if the team selects a managed identity provider. Do not implement a fake provider or request credentials during foundation work.
 
 ### 2.6 Validation
 
@@ -117,7 +120,15 @@ Do not expose PostgreSQL publicly. Keep the database on an internal Docker netwo
 
 ## 6. Media Storage
 
-The CMS needs a media abstraction. Local development may use a local persistent directory or a compatible development service. Production storage provider is not yet selected. Prefer S3-compatible object storage or another persistent storage service with independent backup. Do not rely on an ephemeral container filesystem for uploaded production files.
+Use a storage abstraction so CMS business logic is independent of the storage provider.
+
+- **Local development (selected):** local filesystem under the ignored `storage/uploads/` directory. This requires no external credentials and persists across application restarts. It is not a production storage location.
+- **Production (selected direction):** S3-compatible object storage with independent backups and a documented lifecycle policy. The concrete provider, endpoint, bucket, region, and credentials remain deployment decisions.
+- Keep file metadata and storage keys in PostgreSQL; keep binary files outside the database by default.
+- Validate upload size and actual content type; never trust extensions alone.
+- Do not store production uploads only in an ephemeral application container.
+
+No storage provider credentials are required during Phase 0 or Phase 1.
 
 ## 7. Analytics
 

@@ -5,14 +5,18 @@ These instructions apply to AI coding assistants and human contributors working 
 ## 1. Read Before Making Changes
 
 Before implementation, read:
-1. `.flexbox-docs/PRD.md` — product scope and acceptance criteria.
-2. `.flexbox-docs/Architecture.md` — application boundaries and data flow.
-3. `.flexbox-docs/Tech-Stack.md` — selected technologies and compatibility rules.
-4. `.flexbox-docs/Structure_File.md` — intended repository organization.
-5. `.flexbox-docs/Roadmap.md` — current phase and exit criteria.
-6. `.flexbox-docs/Desain.md` — visual direction for the public microsite.
 
-The latest explicit project-owner instruction takes precedence. The approved PRD and Architecture documents extend the earlier visual design brief to include a private CMS, authentication, PostgreSQL, and analytics. The visual principles in `Desain.md` remain authoritative for the public User Page.
+1. `.docs/PRD.md` — product scope and acceptance criteria (authoritative functional scope).
+2. `.docs/Architecture.md` — application boundaries, data flow, and recorded decisions.
+3. `.docs/Tech-Stack.md` — selected technologies, versions, and compatibility rules.
+4. `.docs/Structure_File.md` — intended repository organization.
+5. `.docs/Roadmap.md` — current phase and exit criteria.
+6. `.docs/Desain.md` — visual direction for the public microsite.
+7. `.docs/LOCAL_DEVELOPMENT.md` — repeatable Windows local setup.
+
+The latest explicit project-owner instruction takes precedence. The approved PRD and Architecture documents extend the earlier visual design brief to include a private CMS, authentication, PostgreSQL, and analytics. The visual principles in `.docs/Desain.md` remain authoritative for the public User Page.
+
+`.docs/Desain.md` is intentionally kept in its original Indonesian form and is not rewritten by tooling. Where it describes an earlier Vite/React single-page prototype, the approved Next.js stack in `.docs/Tech-Stack.md` supersedes the implementation details; its visual, typography, color, and accessibility rules still apply to the public page.
 
 ## 2. Product Boundaries
 
@@ -24,17 +28,19 @@ The latest explicit project-owner instruction takes precedence. The approved PRD
 - Public visitors must never receive draft, archived, unpublished, or private admin data.
 - All public content intended to be edited by the team must be manageable through the CMS without source-code changes.
 - Do not invent URLs, email addresses, social accounts, studio claims, or other public content.
+- Public preview shows published content only. Do not add a draft preview route in the initial scope.
 
 ## 3. Technical Standards
 
 - Use Next.js App Router, TypeScript, Tailwind CSS v4, PostgreSQL, Prisma ORM, and Auth.js.
 - Use pnpm as the package manager and commit `pnpm-lock.yaml`.
-- Use stable, mutually compatible dependency releases. Do not adopt a release candidate for production without explicit approval.
-- Follow the documentation for the exact installed Prisma major version. Prisma major versions may differ in config files, generated-client paths, and driver-adapter requirements.
+- Use stable, mutually compatible dependency releases. Do not adopt a release candidate, beta, canary, or experimental build for production without explicit approval.
+- Follow the documentation for the exact installed Prisma major version. Prisma major versions differ in config filenames, generated-client paths, and driver-adapter requirements. This repository uses Prisma 7; its CLI reads `prisma7.config.ts`.
 - Use Server Components by default; add Client Components only where interactivity requires them.
 - Keep the application a modular monolith until a measured need justifies splitting services.
 - Validate all untrusted input on the server. Zod is the preferred validation library unless the owner chooses another.
 - Reuse existing project conventions before introducing a new dependency or abstraction.
+- Keep project Node.js and pnpm versions aligned with `.nvmrc`, `package.json` `engines`, and the `packageManager` field.
 
 ## 4. Authentication and Authorization Rules
 
@@ -43,19 +49,21 @@ The latest explicit project-owner instruction takes precedence. The approved PRD
 - Check the active Flexbox allowlist and `SUPER_ADMIN` role on the server for every protected read and mutation.
 - Do not rely only on client-side checks or route redirects.
 - Never expose password hashes, session tokens, OAuth secrets, `AUTH_SECRET`, or database credentials.
-- Do not assume Auth.js Credentials Provider persists users through an adapter or supports database sessions. Confirm the provider/session design before implementing authentication.
+- The approved strategy is the Auth.js Credentials provider with JWT sessions. Auth.js does not persist Credentials users through an adapter and does not create database sessions for them. Account lookup, password verification, rate limiting, and provisioning are application responsibilities.
+- Hash passwords with Argon2id. Never store or log plaintext passwords.
 - Keep login, invitation, and recovery endpoints rate-limited.
 
 ## 5. Database and Migration Rules
 
 - PostgreSQL is the application database for this project.
-- Prisma schema belongs in `prisma/schema.prisma`; migrations belong in `prisma/migrations/`.
+- Prisma schema belongs in `prisma/schema.prisma`; migrations belong in `prisma/migrations/`; CLI configuration belongs in `prisma7.config.ts`.
 - Use `prisma migrate dev` only against local development databases.
 - Use `prisma migrate deploy` for controlled staging/production releases.
 - Never run destructive reset or development migration commands against production.
 - Review migration SQL and data impact before release.
 - Preserve analytics history when links/categories are archived or deleted; use deliberate nullable references or snapshots.
 - Do not expose PostgreSQL publicly in production.
+- Prisma 7 uses a driver adapter (`@prisma/adapter-pg` with the `pg` driver) at runtime. Do not fall back to Prisma 5/6 connection patterns.
 
 ## 6. Analytics and Privacy Rules
 
@@ -72,6 +80,7 @@ The latest explicit project-owner instruction takes precedence. The approved PRD
 
 - Validate upload size and actual file content type; do not trust extensions alone.
 - Keep production media in persistent storage or object storage, not an ephemeral application container.
+- Use the storage abstraction in `src/lib/storage/`; do not call a provider SDK directly from CMS code.
 - Sanitize content and escape output appropriately.
 - Do not allow arbitrary script, HTML execution, or arbitrary CSS through CMS settings.
 - Restrict link URL schemes to approved protocols.
@@ -85,6 +94,7 @@ The latest explicit project-owner instruction takes precedence. The approved PRD
 - Never copy local credentials into staging or production.
 - Never use `NEXT_PUBLIC_` for secrets.
 - Keep Compose-only variables separate: Docker Compose automatically reads `.env` by default, not `.env.local`.
+- Prisma CLI does not auto-load Next.js env files; `prisma7.config.ts` loads `.env.local` explicitly for local commands.
 - Do not commit production data dumps or uploaded user/media files.
 
 ## 9. Development Workflow
@@ -100,16 +110,26 @@ The latest explicit project-owner instruction takes precedence. The approved PRD
 9. Do not overwrite, discard, or reformat unrelated user changes.
 10. Do not deploy to production, alter remote infrastructure, or perform destructive database actions without explicit authorization.
 
-## 10. Initial Local Setup Facts
+## 10. Local Setup Facts
 
-At the time these documents were prepared, the repository contains `.docs/Desain.md`, `.flexbox/LogoFlexBox.png`, and `LICENSE`, plus local untracked setup files shown by the owner. It does not yet contain a Next.js `package.json` or Prisma dependency.
+- Repository path used by the owner: `D:\Kiandra Gagah\Projek Gabut\flexbox-linktree`.
+- Local Node.js: v26.13.0 (Active LTS, codename "Lithium").
+- Local npm: 11.20.0. Local pnpm: 12.18.0.
+- Docker: 29.8.2, Docker Compose v5.5.1.
+- Local PostgreSQL container: `flexbox-linktree-db`, image `postgres:17-alpine`, host binding `127.0.0.1:5433` to container port `5432`, database `flexbox_linktree_dev`, user `flexbox`.
+- The app runs directly on the Windows host; only PostgreSQL runs in Docker.
+- Local secrets live only in `.env.local`, which is ignored by Git.
 
-The owner's pasted terminal output confirms:
-- Docker initially could not connect because the Docker Desktop Linux engine was not running.
-- After Docker Desktop started, `docker compose up -d postgres` succeeded.
-- The local PostgreSQL container became healthy on host binding `127.0.0.1:5433` to container port `5432`.
-- pnpm was installed globally and `pnpm -v` returned `12.18.0`.
-- Prisma commands failed because Prisma is not installed in a project yet; the repository has no `package.json`.
-- `pnpm dev` failed because no `dev` script exists before the Next.js project is created.
+See `.docs/LOCAL_DEVELOPMENT.md` for the exact commands.
 
-Do not treat these expected pre-project errors as PostgreSQL failures. Continue with project scaffolding, dependency installation, and Prisma setup after protecting local secrets.
+## 11. Next.js Agent Rules
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

@@ -6,6 +6,8 @@ node_modules/
 .next/
 out/
 build/
+next-env.d.ts
+*.tsbuildinfo
 
 # Testing
 coverage/
@@ -15,8 +17,13 @@ coverage/
 .env.*
 !.env.example
 
+# Generated Prisma Client (regenerate with `pnpm db:generate`)
+src/generated/
+
 # Logs
 *.log
+npm-debug.log*
+pnpm-debug.log*
 
 # Operating system
 .DS_Store
@@ -27,3 +34,8 @@ Thumbs.db
 
 # Local storage
 .local-storage/
+storage/uploads/
+
+# Local database dumps
+*.dump
+*.sql.gz

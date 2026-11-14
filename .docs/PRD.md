@@ -145,7 +145,7 @@ Behavior:
 - Rate limiting and secure session handling are required.
 - MFA is recommended for production administrators.
 
-**Authentication implementation decision:** Auth.js is selected, but the provider/session strategy must be confirmed before implementation. If using an OAuth/email provider with a Prisma adapter, database-backed sessions may be used. If using the Credentials provider, Auth.js uses JWT sessions; the application must implement password verification, account lookup, rate limiting, and provisioning explicitly. Do not assume Credentials automatically persists users or uses database sessions.
+**Authentication implementation decision:** Auth.js / NextAuth will use the Credentials provider with JWT sessions. This is the practical option for a small, explicitly provisioned internal Flexbox team because no external OAuth provider or credentials are available for this release. The application will own allowlist provisioning, password verification with Argon2id, login rate limiting, and the `SUPER_ADMIN` active-status authorization check. Credentials users are not automatically persisted by the Prisma adapter, and Credentials sessions are not database sessions. An OAuth provider plus Prisma adapter/database sessions remains a future option if Flexbox adopts a managed identity provider.
 
 ### 6.2 Dashboard
 
@@ -349,11 +349,14 @@ The first production release is acceptable when:
 ## 11. Open Decisions
 
 The following items must be decided before the related implementation begins:
-- Auth.js provider and session strategy (OAuth/database session vs Credentials/JWT).
-- Admin invitation and identity verification workflow.
-- Media storage provider for production.
+- Admin invitation and identity verification workflow — partially resolved: provisioning is internal via `SUPER_ADMIN`, but the exact verification step (e.g., email confirmation) is still open.
+- Media storage provider for production — resolved as S3-compatible object storage; the specific provider remains an operational decision.
 - Final domain and public contact/social destinations.
 - Final copy and approved public categories.
-- Analytics cookie/session lifetime and final retention policy.
+- Analytics cookie/session lifetime and final retention policy (initial raw-event retention target: 90 days).
 - Reporting timezone override policy (default: `Asia/Jakarta`).
 - Whether an independent staging deployment is affordable in the initial VPS plan.
+
+Closed decisions (recorded in `.docs/Architecture.md`, `.docs/Tech-Stack.md`, and this document):
+- Auth.js provider/session strategy: Credentials provider with JWT sessions (stable NextAuth v4).
+- Media storage: storage abstraction, local filesystem for development, S3-compatible object storage for production.
