@@ -32,6 +32,8 @@ flowchart TD
     Media --> Storage[(Persistent or S3-compatible Storage)]
 ```
 
+The diagram describes the target architecture. Phase 1 implements only the server-to-Prisma-to-PostgreSQL path for a single health-check model.
+
 ## 3. Deployment Topology
 
 ### 3.1 Local Development
@@ -224,6 +226,18 @@ Use distinct values for:
 - Production.
 
 Never share a database URL, Auth.js secret, OAuth secret, or storage credential across environments. `.env.local` is for local Next.js development. Docker Compose automatically reads `.env` by default, not `.env.local`; keep local Compose credentials explicit or place Compose-only variables in a separate ignored `.env` file. Ensure the host port and database URL match.
+
+Prisma CLI does not inherit Next.js environment loading. `prisma7.config.ts` loads `.env.local` explicitly so `prisma validate`, `prisma generate`, `prisma migrate`, and `prisma studio` operate on the same local database as the application. Keep that behavior; do not introduce a second credential source for the CLI.
+
+## 11.1 Current Implementation Status (Phase 1)
+
+The repository currently contains only the foundation:
+
+- Next.js App Router application, TypeScript strict mode, Tailwind CSS v4 tokens, and a minimal placeholder page.
+- Prisma 7 with the `pg` driver adapter, a single `SystemCheck` model, the `init` migration, and a local connectivity check.
+- Lint, typecheck, unit test, and production build scripts.
+
+Nothing in this section implies that the public microsite, admin CMS, authentication, media library, analytics, or deployment exists yet. Those are later phases.
 
 ## 12. Database Migration and Release
 

@@ -28,7 +28,7 @@ flexbox-linktree/
 │   ├── migrations/              # committed migrations (init)
 │   └── check.ts                 # local connectivity/query check
 ├── public/assets/flexbox-logo.png
-├── scripts/readiness.test.ts    # foundation unit test
+├── tests/unit/url.test.ts       # foundation unit test (Vitest)
 ├── src/
 │   ├── app/                     # layout.tsx, page.tsx, globals.css
 │   ├── components/
@@ -36,7 +36,8 @@ flexbox-linktree/
 │   ├── generated/prisma/        # generated Prisma Client (git-ignored)
 │   ├── lib/
 │   │   ├── prisma/client.ts
-│   │   └── system-check.ts
+│   │   ├── system-check.ts
+│   │   └── utils/url.ts
 │   └── types/
 ├── AGENTS.md
 ├── README.md
@@ -48,7 +49,7 @@ flexbox-linktree/
 ├── pnpm-workspace.yaml
 ├── prisma7.config.ts            # Prisma 7 CLI configuration
 ├── tsconfig.json
-├── vitest.config.ts
+├── vitest.config.mts
 ├── .env.example
 ├── .nvmrc
 └── .gitignore

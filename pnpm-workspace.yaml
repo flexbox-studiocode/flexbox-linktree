@@ -1,0 +1,9 @@
+# pnpm 12 blocks dependency build scripts by default.
+# Only allowlisted packages may run install scripts. Review a package's
+# postinstall script before adding it here.
+allowBuilds:
+  "@prisma/engines": true
+  esbuild: true
+  prisma: true
+  sharp: false
+  unrs-resolver: false

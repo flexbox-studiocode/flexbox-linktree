@@ -35,6 +35,8 @@ Use the App Router. Keep public pages fast and mostly server-rendered. Use Serve
 
 Use Tailwind CSS v4 according to its current Next.js integration. Do not add Tailwind v3 configuration patterns unless a verified compatibility requirement makes them necessary. Define brand tokens and global base styles centrally.
 
+In this repository Tailwind v4 is wired through `@tailwindcss/turbopack` (declared in `next.config.ts`) and a single `@import "tailwindcss";` in `src/app/globals.css`. There is no `tailwind.config.js` and no legacy PostCSS pipeline. Brand tokens from `.docs/Desain.md` are declared in an `@theme` block in `globals.css`.
+
 ### 2.3 PostgreSQL
 
 PostgreSQL is the primary and only required database for this product. The Flexbox VPS may host MySQL, MariaDB, and MongoDB for other projects later, but Flexbox Linktree must not depend on those engines.
@@ -44,6 +46,14 @@ PostgreSQL is the primary and only required database for this product. The Flexb
 Use Prisma for typed database access and schema migrations. Keep schema in `prisma/schema.prisma` and committed migrations in `prisma/migrations/`. Use development migration commands only against local/staging development databases. Use deployment migrations for staging/production.
 
 Prisma major versions may change configuration and driver-adapter requirements. Select one stable major version and follow its matching documentation consistently. Do not mix setup examples from different Prisma major versions.
+
+This repository uses **Prisma 7.10.1**:
+
+- The CLI configuration file is `prisma7.config.ts`. Prisma 7's CLI resolves that versioned filename.
+- Prisma does not auto-load `.env` or `.env.local`; `prisma7.config.ts` loads `.env.local` with `dotenv` so the CLI and the application target the same local database.
+- The `prisma-client` generator emits into `src/generated/prisma`, which is git-ignored. Run `pnpm db:generate` after cloning or changing the schema.
+- Runtime access requires the `@prisma/adapter-pg` driver adapter with the `pg` driver. There is no implicit direct connection from the generated client.
+- Do not apply Prisma 5/6 `prisma.config.ts`, `env()` helper, or implicit-engine examples to this project.
 
 ### 2.5 Auth.js / NextAuth
 
@@ -59,14 +69,16 @@ OAuth with a Prisma adapter and database sessions remains an option for a later 
 
 ### 2.7 Testing and Code Quality
 
-Recommended baseline:
-- ESLint for static linting.
-- TypeScript compiler checks (`tsc --noEmit`).
-- Vitest for unit/integration tests where suitable.
-- Playwright for browser-based end-to-end tests.
-- Prettier or the selected formatter, with one consistent formatting convention.
+Implemented in this repository:
 
-These are recommendations; add them intentionally and document their scripts in `package.json`.
+- ESLint (`pnpm lint`, `eslint .` with flat config, generated Prisma output ignored).
+- TypeScript compiler check (`pnpm typecheck`, `tsc --noEmit`, strict mode).
+- Vitest (`pnpm test`, `vitest run`, unit tests under `tests/unit`).
+- `next build` (`pnpm build`).
+
+Planned for later phases: Playwright for browser-based end-to-end tests, one consistent formatter, and Zod wiring for server-side input validation. Zod is not installed in Phase 1; it is added when the first server-validated form exists.
+
+Add tooling intentionally and document every script in `package.json`.
 
 ## 3. Local Development Stack
 
@@ -75,8 +87,8 @@ These are recommendations; add them intentionally and document their scripts in 
 | Operating system | Windows |
 | Editor | VS Code |
 | Shell | PowerShell |
-| Node.js | Supported LTS release, same major as production |
-| Package manager | pnpm |
+| Node.js | 26.x Active LTS (`.nvmrc`), floor 24 |
+| Package manager | pnpm 12.18.0 (pinned in `package.json`) |
 | Next.js dev server | Runs directly on Windows host |
 | PostgreSQL | Docker Desktop / WSL2 container |
 | Host database port | `127.0.0.1:5433` |
@@ -87,15 +99,16 @@ The currently prepared local PostgreSQL container uses `postgres:17-alpine`, dat
 
 ## 4. Environment Variables
 
-Expected variables will evolve as providers are selected. Start with:
+Current committed template (`.env.example`):
 
 ```dotenv
-DATABASE_URL="postgresql://flexbox:LOCAL_PASSWORD@localhost:5433/flexbox_linktree_dev?schema=public"
-AUTH_SECRET="GENERATE_A_UNIQUE_LOCAL_SECRET"
-AUTH_URL="http://localhost:3000"
+DATABASE_URL="postgresql://flexbox:dev-only-password@localhost:5433/flexbox_linktree_dev?schema=public"
+AUTH_SECRET="replace-with-a-unique-locally-generated-secret"
 ```
 
-Add OAuth provider credentials only when an OAuth provider is chosen. Add storage credentials only after the production media-storage provider is selected.
+`AUTH_URL` is not required for the current local setup. Auth.js v4 derives the URL from the request in development; add an explicit `AUTH_URL` only when the deployment topology requires it.
+
+Add storage credentials only after the production media-storage provider is selected. Add no OAuth provider variables under the recorded Credentials strategy.
 
 Rules:
 - `.env.local` must be ignored by Git.
@@ -104,6 +117,7 @@ Rules:
 - Never put secrets in `NEXT_PUBLIC_*` variables.
 - Do not reuse `AUTH_SECRET` across environments.
 - Docker Compose reads `.env` automatically by default, not `.env.local`; keep Compose variables separate or explicit.
+- Prisma CLI reads `.env.local` through `prisma7.config.ts`.
 
 ## 5. Production Stack
 

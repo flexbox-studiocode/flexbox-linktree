@@ -1,0 +1,25 @@
+// Flexbox Linktree — Prisma schema
+// Prisma 7 configuration lives in prisma7.config.ts.
+// This schema is intentionally minimal for Phase 1. The full CMS domain model
+// is designed in a later phase.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Minimal health-check entity used to prove that migrations, the Prisma
+/// client, and the local PostgreSQL connection work end to end.
+model SystemCheck {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique
+  note      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_checks")
+}
