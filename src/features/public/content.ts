@@ -133,19 +133,13 @@ export const publicCategories: LinkCategory[] = [
   },
 ];
 
-/**
- * Contact destination is intentionally unset until the owner confirms the real
- * address. While it is `null`, the contact section renders a non-interactive
- * status label instead of a fake `mailto:` link.
- */
-export const contactEmail: string | null = null;
-
 export const siteContent = {
   name: "Flexbox Studio",
   wordmark: "Flexbox",
   wordmarkSuffix: "Studio",
   supportingLabel: "Digital directory",
   headerNavLabel: "Jelajahi",
+  contactNavLabel: "Kontak",
   headerCtaLabel: "Mari terhubung",
   heroEyebrow: "Digital hub / Direktori 01",
   heroTitle: "Ide fleksibel. Karya nyata.",

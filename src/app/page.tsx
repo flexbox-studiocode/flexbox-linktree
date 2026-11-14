@@ -1,5 +1,9 @@
+import { copyrightYear } from "@/features/public/copyright";
+
+import ContactCta from "@/components/public/contact-cta";
 import Directory from "@/components/public/directory";
 import Hero from "@/components/public/hero";
+import SiteFooter from "@/components/public/site-footer";
 import SiteHeader from "@/components/public/site-header";
 
 /**
@@ -21,7 +25,10 @@ export default function PublicPage() {
       <main id="konten">
         <Hero />
         <Directory />
+        <ContactCta />
       </main>
+
+      <SiteFooter year={copyrightYear} />
     </div>
   );
 }

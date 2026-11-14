@@ -130,7 +130,6 @@ a.link-card:hover .link-card__arrow { transform: translate(2px, -2px); }
 .contact__link:hover { background: var(--blue-strong); }
 .contact__pending { display: inline-flex; align-items: center; gap: 8px; margin: 0; color: #384555; font-size: 13px; font-weight: 700; }
 .contact__pending-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue-strong); }
-
 .site-footer { background: var(--footer); color: #edf2f8; }
 .site-footer__inner { min-height: 180px; display: flex; flex-direction: column; justify-content: center; gap: 22px; padding-block: 32px; }
 .footer-brand { display: flex; align-items: center; gap: 11px; }
