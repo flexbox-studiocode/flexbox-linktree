@@ -12,6 +12,9 @@ next-env.d.ts
 # Testing
 coverage/
 
+# Local visual QA screenshots (not committed)
+.qa-screens/
+
 # Environment variables and secrets
 .env
 .env.*

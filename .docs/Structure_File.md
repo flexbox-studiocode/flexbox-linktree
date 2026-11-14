@@ -15,24 +15,47 @@
 
 ## 2. Proposed Repository Tree
 
-The tree below is the **target structure** for the full product. Sections marked "current" describe what exists after Phase 1.
+The tree below is the **target structure** for the full product. Sections marked "current" describe what exists after Phase 2.
 
-### 2.1 Current state (after Phase 1)
+### 2.1 Current state (after Phase 2)
 
 ```text
 flexbox-linktree/
-├── .docs/                       # normalized documentation (Phase 0)
+├── .docs/                       # normalized documentation
+│   ├── PUBLIC_PAGE.md           # Phase 2 public page + content model reference
+│   └── ... (PRD, Architecture, Desain, Tech-Stack, Roadmap, Structure_File, LOCAL_DEVELOPMENT)
 ├── .flexbox/LogoFlexBox.png     # original brand source asset
 ├── prisma/
 │   ├── schema.prisma            # Prisma 7 schema, SystemCheck model
 │   ├── migrations/              # committed migrations (init)
 │   └── check.ts                 # local connectivity/query check
 ├── public/assets/flexbox-logo.png
-├── tests/unit/url.test.ts       # foundation unit test (Vitest)
+├── scripts/
+│   ├── visual-qa.mjs            # viewport screenshots + overflow/console/network checks
+│   ├── a11y-audit.mjs           # landmarks, names, contrast, focus, reduced motion
+│   └── a11y-interaction.mjs     # 200% zoom, anchor offsets, tab order
+├── tests/unit/
+│   ├── url.test.ts              # destination-scheme rules
+│   └── public-content.test.ts   # public content model + page structure contracts
 ├── src/
-│   ├── app/                     # layout.tsx, page.tsx, globals.css
-│   ├── components/
-│   ├── features/
+│   ├── app/
+│   │   ├── layout.tsx           # fonts, metadata, viewport, lang
+│   │   ├── page.tsx             # public route composition (static)
+│   │   ├── globals.css          # design tokens + public stylesheet
+│   │   ├── icon.png             # favicon from brand logo
+│   │   └── robots.ts            # /robots.txt
+│   ├── components/public/
+│   │   ├── site-header.tsx
+│   │   ├── hero.tsx
+│   │   ├── directory.tsx
+│   │   ├── link-card.tsx
+│   │   ├── link-icon.tsx        # inline outline SVG icon set
+│   │   ├── contact-cta.tsx
+│   │   └── site-footer.tsx
+│   ├── features/public/
+│   │   ├── content.ts           # LinkItem/LinkCategory, site copy, anchors
+│   │   ├── contact.ts           # contact destination switch (unset)
+│   │   └── copyright.ts         # stable copyright year
 │   ├── generated/prisma/        # generated Prisma Client (git-ignored)
 │   ├── lib/
 │   │   ├── prisma/client.ts
@@ -55,7 +78,7 @@ flexbox-linktree/
 └── .gitignore
 ```
 
-`src/components` and `src/features` exist with a `.gitkeep` and their intended purpose documented; they are created now so feature work does not restructure the tree mid-phase.
+Phase 3 and later phases add `src/features/links`, `src/features/categories`, `src/features/settings`, `src/components/admin`, and the `src/app/admin` tree. The public page already consumes typed `LinkItem`/`LinkCategory` props, so swapping the static content module for database queries does not require rewriting the presentation components.
 
 ### 2.2 Target structure
 

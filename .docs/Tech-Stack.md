@@ -76,7 +76,15 @@ Implemented in this repository:
 - Vitest (`pnpm test`, `vitest run`, unit tests under `tests/unit`).
 - `next build` (`pnpm build`).
 
-Planned for later phases: Playwright for browser-based end-to-end tests, one consistent formatter, and Zod wiring for server-side input validation. Zod is not installed in Phase 1; it is added when the first server-validated form exists.
+Phase 2 added a **library-only** browser checks layer, not a full E2E framework:
+
+- `playwright-core` (dev dependency, drives the locally installed Chrome channel, no browser download).
+- `pnpm qa:visual` — full-page screenshots at 320/390/600/768/1024/1280/1440 plus horizontal-overflow, console-error, and failed-request detection.
+- `pnpm qa:a11y` — landmarks, heading order, accessible names, touch targets, computed contrast ratios, focus visibility, internal anchor targets, reduced-motion behaviour, and 200% zoom behaviour.
+
+Rationale: Phase 2 has mandatory responsive/accessibility acceptance criteria that a build cannot verify, and the harness browser available to the agent could not emulate viewport widths. `playwright-core` was chosen over `@playwright/test` to avoid adding a second test runner. Screenshots are written to `.qa-screens/`, which is git-ignored.
+
+Planned for later phases: a full E2E runner (`@playwright/test`) for public and admin journeys, one consistent formatter, and Zod wiring for server-side input validation. Zod is not installed in Phase 1; it is added when the first server-validated form exists.
 
 Add tooling intentionally and document every script in `package.json`.
 

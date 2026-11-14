@@ -61,19 +61,37 @@ Phase 1 status: **complete and verified.** See `.docs/LOCAL_DEVELOPMENT.md` for 
 **Goal:** Implement the public microsite from the approved visual direction.
 
 Tasks:
-- [ ] Establish design tokens, typography, color palette, and reusable UI primitives.
-- [ ] Build responsive header/navigation.
-- [ ] Build compact hero section.
-- [ ] Build editorial category/link directory with no search/filter/counter.
-- [ ] Build link cards and safe external navigation.
-- [ ] Build contact CTA and footer.
-- [ ] Add SEO and social sharing metadata.
+- [x] Establish design tokens, typography, color palette, and reusable UI primitives.
+- [x] Build responsive header/navigation.
+- [x] Build compact hero section.
+- [x] Build editorial category/link directory with no search/filter/counter.
+- [x] Build link cards and safe external navigation.
+- [x] Build contact CTA and footer.
+- [x] Add SEO and social sharing metadata.
 - [ ] Implement public data loading with published/active records only.
-- [ ] Verify mobile, tablet, desktop, keyboard, reduced motion, and contrast.
+- [x] Verify mobile, tablet, desktop, keyboard, reduced motion, and contrast.
 
 **Exit criteria:** public page renders correctly from database content and has no draft leakage.
 
-Note: final public domain, email, social destinations, and copy must be confirmed before this phase ships. Removing the Phase 1 placeholder page is part of this phase.
+Phase 2 status: **complete for the static-content milestone.** All page, design, responsive, accessibility, metadata, and verification work is done and recorded in `.docs/PUBLIC_PAGE.md`; the production build emits a fully static `/`.
+
+Deliberate carry-over into Phase 3 (Content Database and CMS Foundation):
+
+- Public data currently comes from the typed configuration in `src/features/public/content.ts`, not from PostgreSQL. "Public data loading with published/active records only" therefore cannot be satisfied yet and stays unchecked until the database-backed content layer exists.
+- Phase 2 content contains no drafts, archived records, or private admin data, so no draft leakage is possible in the current state; the published-only query rule is verified in Phase 3.
+
+Content items still awaiting owner confirmation before public release:
+
+- Real destinations for Flexbox Design System, Flexbox Lab, Website Flexbox, Sumber Daya, Karya Digital, and Eksperimen Visual. They render as non-interactive "Segera" cards until then.
+- The public contact channel. The contact section shows a status label until `contactEmail` in `src/features/public/contact.ts` is set to a verified address.
+- Final production domain, which blocks the canonical URL, `metadataBase`, Open Graph image, and sitemap.
+
+Open design-verification items (Figma was not reachable from the local browser during Phase 2, returning an edge access error):
+
+- Exact Figma frame selection, spacing values, decorative elements, and mobile-specific adaptation.
+- The hero copy variant. The implementation uses "IDE FLEKSIBEL. KARYA NYATA." from the owner's screenshot, not the earlier "EVERYTHING IN ONE PLACE." brief reference.
+- Verified only against `.docs/Desain.md` and the owner's supplied screenshot description.
+
 
 ## Phase 3 — Content Database and CMS Foundation
 
@@ -200,7 +218,7 @@ Potential follow-up work, only after observing real usage:
 |---|---|
 | Phase 0 — Product and Documentation Baseline | Complete |
 | Phase 1 — Local Environment and Project Foundation | Complete |
-| Phase 2 — Public User Page | Not started |
+| Phase 2 — Public User Page | Complete (static content; database-backed loading deferred to Phase 3) |
 | Phase 3 — Content Database and CMS Foundation | Not started |
 | Phase 4 — Authentication and Authorization | Not started |
 | Phase 5 — Full CMS | Not started |

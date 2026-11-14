@@ -11,22 +11,27 @@ The public experience is deliberately a microsite, not an application dashboard.
 
 ## Status
 
-**Phase 1 — Local Environment and Project Foundation** is the current implementation phase.
+**Phase 2 — Public User Page** is implemented as a fully static microsite. Phase 1 (local environment and project foundation) remains in place.
 
 Implemented at this point:
 
 - Next.js App Router application with TypeScript (strict) and Tailwind CSS v4.
+- Public Flexbox Studio Digital Hub: header, hero, editorial directory with eight curated cards, contact call-to-action, and graphite footer.
+- Safe destination handling through `src/lib/utils/url.ts`; unconfirmed destinations render as non-interactive "Segera" cards rather than invented links.
+- Self-hosted Anton (display) and Manrope (body fallback) through `next/font`.
+- Page metadata, favicon, and `/robots.txt`.
 - Local PostgreSQL 17 running in Docker, connected through Prisma 7 with the `pg` driver adapter.
-- Initial `SystemCheck` migration and a Prisma-backed connectivity check.
-- Lint, typecheck, unit test, and production build scripts.
+- Lint, typecheck, unit test, production build, and browser QA scripts.
 
 Not implemented yet (later roadmap phases):
 
-- Public microsite UI, link cards, and editorial directory.
-- Admin dashboard, login UI, and authentication flow.
-- Link/category/settings/media CMS features.
-- Analytics collection and reporting.
-- Production deployment, Coolify, and staging infrastructure.
+- Database-backed public content (Phase 3).
+- Admin dashboard, login UI, and authentication flow (Phase 4–5).
+- Link/category/settings/media CMS features (Phase 5).
+- Analytics collection and reporting (Phase 6).
+- Production deployment, Coolify, and staging infrastructure (Phase 8).
+
+Content still awaiting owner confirmation: six directory destinations, the public contact channel, and the final production domain. See `.docs/Roadmap.md` (Phase 2) and `.docs/PUBLIC_PAGE.md`.
 
 See `.docs/Roadmap.md` for the full phase plan and exit criteria.
 
@@ -88,6 +93,7 @@ Full Windows instructions, environment-variable rules, database commands, reset 
 | `.docs/Tech-Stack.md` | Selected technologies, versions, and compatibility policy. |
 | `.docs/Structure_File.md` | Repository layout and conventions. |
 | `.docs/Roadmap.md` | Phases and measurable exit criteria. |
+| `.docs/PUBLIC_PAGE.md` | Public page sections, content model, destination policy, and QA commands. |
 | `.docs/LOCAL_DEVELOPMENT.md` | Repeatable local Windows setup. |
 | `.docs/Desain.md` | Visual design authority for the public microsite (kept in its original Indonesian form). |
 | `AGENTS.md` | Operative rules for contributors and coding assistants. |
@@ -104,6 +110,8 @@ Brand assets live in `.flexbox/` (source) and `public/assets/` (web-ready copies
 | `pnpm lint` | ESLint. |
 | `pnpm typecheck` | TypeScript check with `tsc --noEmit`. |
 | `pnpm test` | Vitest unit tests. |
+| `pnpm qa:visual` | Viewport screenshots plus overflow, console, and network checks (needs the dev server). |
+| `pnpm qa:a11y` | Accessibility, contrast, zoom, anchor, and reduced-motion checks (needs the dev server). |
 | `pnpm db:generate` | Generate Prisma Client. |
 | `pnpm db:validate` | Validate the Prisma schema. |
 | `pnpm db:migrate` | Create/apply a development migration. |

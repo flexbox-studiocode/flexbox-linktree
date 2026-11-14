@@ -73,6 +73,23 @@ Bagian ini berdasarkan pembacaan repository saat dokumen dibuat. Perbarui ketika
 
 **Penting:** perubahan dokumen ini tidak sekaligus mengubah UI. Saat diminta menyelaraskan tampilan, kerjakan perbedaan yang relevan secara eksplisit dan laporkan yang masih terbuka.
 
+### 3.1 Status implementasi Phase 2 (Next.js)
+
+Bagian ini mencatat kondisi nyata setelah Phase 2, bukan mengubah aturan desain di atas.
+
+| Area | Kondisi implementasi |
+| --- | --- |
+| Stack | Next.js App Router + Tailwind CSS v4; token warna dan tipografi berada di `src/app/globals.css` |
+| Font judul | Anton melalui `next/font` (self-hosted saat build) |
+| Font isi | Manrope sebagai fallback resmi; Satoshi belum tersedia sebagai aset berlisensi sehingga tidak disertakan |
+| Logo | `public/assets/flexbox-logo.png` dengan rasio aspek dipertahankan dan `next/image` |
+| Grid direktori | Satu kolom di bawah 600px, dua kolom mulai 600px, maksimal dua kolom |
+| Pencarian/filter/counter | Tidak ada, sesuai arah editorial |
+| Copy hero | Memakai “IDE FLEKSIBEL. KARYA NYATA.” dari screenshot pemilik, bukan “EVERYTHING IN ONE PLACE.” |
+| Kontak | `mailto:` tidak dipublikasikan karena alamat belum terverifikasi; bagian kontak menampilkan label status |
+| Tujuan tautan | Enam tujuan belum terverifikasi sehingga tampil sebagai kartu non-aktif bertanda “Segera” |
+| Verifikasi visual | Figma tidak dapat diakses dari browser lokal saat Phase 2; acuan yang dipakai hanya dokumen ini dan screenshot pemilik |
+
 ## 4. Prinsip visual
 
 ### 4.1 Karakter
