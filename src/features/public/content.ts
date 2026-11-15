@@ -160,8 +160,4 @@ export const siteContent = {
 } as const;
 
 /** Navigation anchors reuse one source so header, hero, and footer stay in sync. */
-export const publicAnchors = {
-  top: "#atas",
-  directory: "#direktori",
-  contact: "#kontak",
-} as const;
+export { publicAnchors } from "@/features/content/constants";
