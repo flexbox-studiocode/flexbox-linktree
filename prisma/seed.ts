@@ -5,7 +5,7 @@ loadEnv({ path: ".env.local", quiet: true });
 import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "../src/generated/prisma/client";
-import { publicCategories, siteContent } from "../src/features/public/content";
+import { seedCategories, seedPublishedAt, seedSiteSettings } from "./seed-data";
 
 /**
  * Repeatable development seed.
@@ -14,11 +14,12 @@ import { publicCategories, siteContent } from "../src/features/public/content";
  *
  * Everything is upserted by a stable natural key (category slug, link slug,
  * site-setting key), so running it twice creates no duplicates and it never
- * deletes records that the team created through the future CMS.
+ * deletes records created elsewhere. The dataset lives in `prisma/seed-data.ts`
+ * and is validated against the content schemas by `tests/unit/seed-data.test.ts`.
  *
- * Destinations come from the Phase 2 content module and are never invented.
- * The six unconfirmed links are seeded as PUBLISHED + `NONE` destination, which
- * is exactly the approved "Segera" non-interactive card behaviour.
+ * Destinations are never invented: six links are seeded as PUBLISHED with a
+ * `NONE` destination, which is precisely the approved `Segera` non-interactive
+ * card behaviour, and two links keep their approved `#kontak` internal anchor.
  */
 const connectionString = process.env.DATABASE_URL;
 
@@ -28,65 +29,14 @@ if (!connectionString) {
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 
-const publishedAt = new Date("2026-01-01T00:00:00.000Z");
-
-const settingValues = {
-  general: {
-    name: siteContent.name,
-    wordmark: siteContent.wordmark,
-    wordmarkSuffix: siteContent.wordmarkSuffix,
-    supportingLabel: siteContent.supportingLabel,
-  },
-  navigation: {
-    headerNavLabel: siteContent.headerNavLabel,
-    contactNavLabel: siteContent.contactNavLabel,
-    headerCtaLabel: siteContent.headerCtaLabel,
-  },
-  hero: {
-    heroEyebrow: siteContent.heroEyebrow,
-    heroTitle: siteContent.heroTitle,
-    heroDescription: siteContent.heroDescription,
-    heroCtaLabel: siteContent.heroCtaLabel,
-  },
-  directory: {
-    directoryEyebrow: siteContent.directoryEyebrow,
-    directoryTitle: siteContent.directoryTitle,
-    directoryDescription: siteContent.directoryDescription,
-  },
-  contact: {
-    contactEyebrow: siteContent.contactEyebrow,
-    contactTitle: siteContent.contactTitle,
-    contactDescription: siteContent.contactDescription,
-    contactCtaLabel: siteContent.contactCtaLabel,
-    contactPendingLabel: siteContent.contactPendingLabel,
-    // Remains null until the owner confirms a real, monitored mailbox.
-    contactEmail: null,
-  },
-  footer: {
-    footerTagline: siteContent.footerTagline,
-    copyrightName: siteContent.copyrightName,
-  },
-  seo: {
-    title: "Flexbox Studio — Digital Hub",
-    description:
-      "Direktori digital Flexbox Studio: produk, proyek, sumber daya, komunitas, dan kontak dalam satu tempat.",
-    // Canonical URL and Open Graph artwork stay null until verified values exist.
-    canonicalUrl: null,
-    openGraphImage: null,
-  },
-} as const;
+const publishedAt = new Date(seedPublishedAt);
 
 async function main(): Promise<void> {
-  for (const category of publicCategories) {
+  for (const category of seedCategories) {
     const record = await prisma.category.upsert({
       where: { slug: category.slug },
-      update: { name: category.title, sortOrder: category.sortOrder, isActive: true },
-      create: {
-        name: category.title,
-        slug: category.slug,
-        sortOrder: category.sortOrder,
-        isActive: true,
-      },
+      update: { name: category.name, sortOrder: category.sortOrder, isActive: true },
+      create: { name: category.name, slug: category.slug, sortOrder: category.sortOrder, isActive: true },
     });
 
     for (const item of category.links) {
@@ -112,14 +62,14 @@ async function main(): Promise<void> {
       };
 
       await prisma.link.upsert({
-        where: { slug: item.id },
+        where: { slug: item.slug },
         update: content,
-        create: { slug: item.id, ...content },
+        create: { slug: item.slug, ...content },
       });
     }
   }
 
-  for (const [key, value] of Object.entries(settingValues)) {
+  for (const [key, value] of Object.entries(seedSiteSettings)) {
     await prisma.siteSetting.upsert({
       where: { key },
       update: { value },
@@ -127,9 +77,9 @@ async function main(): Promise<void> {
     });
   }
 
-  const linkCount = publicCategories.reduce((total, category) => total + category.links.length, 0);
+  const linkCount = seedCategories.reduce((total, category) => total + category.links.length, 0);
   console.log(
-    `Seed complete: ${publicCategories.length} categories, ${linkCount} links, ${Object.keys(settingValues).length} site settings.`,
+    `Seed complete: ${seedCategories.length} categories, ${linkCount} links, ${Object.keys(seedSiteSettings).length} site settings.`,
   );
 }
 

@@ -1,12 +1,23 @@
 import LinkIcon from "@/components/public/link-icon";
-import { contactEmail } from "@/features/public/contact";
-import { siteContent } from "@/features/public/content";
+import type { PublicSiteContent } from "@/features/content/types/public-content";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export default function ContactCta() {
+type ContactCtaProps = {
+  site: Pick<
+    PublicSiteContent,
+    | "contactEyebrow"
+    | "contactTitle"
+    | "contactDescription"
+    | "contactCtaLabel"
+    | "contactPendingLabel"
+    | "contactEmail"
+  >;
+};
+
+export default function ContactCta({ site }: ContactCtaProps) {
   const hasVerifiedDestination =
-    contactEmail !== null && EMAIL_PATTERN.test(contactEmail);
+    site.contactEmail !== null && EMAIL_PATTERN.test(site.contactEmail);
 
   return (
     <section aria-labelledby="contact-title" className="contact" id="kontak">
@@ -15,23 +26,23 @@ export default function ContactCta() {
       </div>
 
       <div className="contact__content">
-        <p className="eyebrow">{siteContent.contactEyebrow}</p>
+        <p className="eyebrow">{site.contactEyebrow}</p>
         <h2 className="contact__title" id="contact-title">
-          {siteContent.contactTitle}
+          {site.contactTitle}
         </h2>
-        <p className="contact__description">{siteContent.contactDescription}</p>
+        <p className="contact__description">{site.contactDescription}</p>
       </div>
 
       <div className="contact__action">
         {hasVerifiedDestination ? (
-          <a className="contact__link" href={`mailto:${contactEmail}`}>
-            {siteContent.contactCtaLabel}
+          <a className="contact__link" href={`mailto:${site.contactEmail}`}>
+            {site.contactCtaLabel}
             <span aria-hidden="true">↗</span>
           </a>
         ) : (
           <p className="contact__pending">
             <span aria-hidden="true" className="contact__pending-dot" />
-            {siteContent.contactPendingLabel}
+            {site.contactPendingLabel}
           </p>
         )}
       </div>

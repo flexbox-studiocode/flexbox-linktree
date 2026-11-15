@@ -1,8 +1,13 @@
 import Image from "next/image";
 
-import { publicAnchors, siteContent } from "@/features/public/content";
+import { publicAnchors } from "@/features/content/constants";
+import type { PublicSiteContent } from "@/features/content/types/public-content";
 
-export default function SiteHeader() {
+type SiteHeaderProps = {
+  site: Pick<PublicSiteContent, "wordmark" | "wordmarkSuffix" | "supportingLabel" | "headerNavLabel" | "headerCtaLabel">;
+};
+
+export default function SiteHeader({ site }: SiteHeaderProps) {
   return (
     <header className="site-header">
       <div className="shell site-header__inner">
@@ -17,18 +22,18 @@ export default function SiteHeader() {
             width={36}
           />
           <span className="brand__text">
-            <span className="brand__wordmark">{siteContent.wordmark}</span>
-            <span className="brand__suffix">{siteContent.wordmarkSuffix}</span>
+            <span className="brand__wordmark">{site.wordmark}</span>
+            <span className="brand__suffix">{site.wordmarkSuffix}</span>
           </span>
-          <span className="brand__label">{siteContent.supportingLabel}</span>
+          <span className="brand__label">{site.supportingLabel}</span>
         </a>
 
         <nav aria-label="Navigasi utama" className="site-nav">
           <a className="site-nav__link" href={publicAnchors.directory}>
-            {siteContent.headerNavLabel}
+            {site.headerNavLabel}
           </a>
           <a className="site-nav__cta" href={publicAnchors.contact}>
-            {siteContent.headerCtaLabel}
+            {site.headerCtaLabel}
             <span aria-hidden="true" className="site-nav__cta-arrow">
               ↗
             </span>

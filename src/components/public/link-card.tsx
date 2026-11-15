@@ -1,5 +1,5 @@
 import LinkIcon from "@/components/public/link-icon";
-import type { LinkItem } from "@/features/public/content";
+import type { PublicLink as LinkItem } from "@/features/content/types/public-content";
 import { getDestinationKind, isAllowedDestinationUrl } from "@/lib/utils/url";
 
 type LinkCardProps = {

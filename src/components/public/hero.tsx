@@ -1,10 +1,18 @@
-import { publicAnchors, siteContent } from "@/features/public/content";
+import { publicAnchors } from "@/features/content/constants";
+import type { PublicSiteContent } from "@/features/content/types/public-content";
 
-export default function Hero() {
+type HeroProps = {
+  site: Pick<
+    PublicSiteContent,
+    "name" | "heroEyebrow" | "heroTitle" | "heroDescription" | "heroCtaLabel"
+  >;
+};
+
+export default function Hero({ site }: HeroProps) {
   return (
     <section aria-labelledby="hero-title" className="hero">
       <div className="hero__stripe" aria-hidden="true">
-        <span className="hero__stripe-label">{siteContent.name}</span>
+        <span className="hero__stripe-label">{site.name}</span>
         <span className="hero__stripe-rule" />
         <span className="hero__stripe-label">Direktori digital</span>
       </div>
@@ -18,13 +26,13 @@ export default function Hero() {
         </div>
 
         <div className="hero__content">
-          <p className="eyebrow">{siteContent.heroEyebrow}</p>
+          <p className="eyebrow">{site.heroEyebrow}</p>
           <h1 className="hero__title" id="hero-title">
-            {siteContent.heroTitle}
+            {site.heroTitle}
           </h1>
-          <p className="hero__description">{siteContent.heroDescription}</p>
+          <p className="hero__description">{site.heroDescription}</p>
           <a className="hero__cta" href={publicAnchors.directory}>
-            {siteContent.heroCtaLabel}
+            {site.heroCtaLabel}
             <span aria-hidden="true" className="hero__cta-arrow">
               ↓
             </span>

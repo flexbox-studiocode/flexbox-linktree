@@ -1,8 +1,14 @@
 import Image from "next/image";
 
-import { publicAnchors, siteContent } from "@/features/public/content";
+import { publicAnchors } from "@/features/content/constants";
+import type { PublicSiteContent } from "@/features/content/types/public-content";
 
-export default function SiteFooter({ year }: { year: number }) {
+type SiteFooterProps = {
+  site: Pick<PublicSiteContent, "name" | "footerTagline" | "copyrightName" | "headerNavLabel" | "headerCtaLabel">;
+  year: number;
+};
+
+export default function SiteFooter({ site, year }: SiteFooterProps) {
   return (
     <footer className="site-footer">
       <div className="shell site-footer__inner">
@@ -16,17 +22,17 @@ export default function SiteFooter({ year }: { year: number }) {
             width={32}
           />
           <div className="footer-brand__text">
-            <p className="footer-brand__name">{siteContent.name}</p>
-            <p className="footer-brand__tagline">{siteContent.footerTagline}</p>
+            <p className="footer-brand__name">{site.name}</p>
+            <p className="footer-brand__tagline">{site.footerTagline}</p>
           </div>
         </div>
 
         <nav aria-label="Navigasi footer" className="footer-nav">
           <a className="footer-nav__link" href={publicAnchors.directory}>
-            {siteContent.headerNavLabel}
+            {site.headerNavLabel}
           </a>
           <a className="footer-nav__cta" href={publicAnchors.contact}>
-            {siteContent.headerCtaLabel}
+            {site.headerCtaLabel}
             <span aria-hidden="true" className="footer-nav__cta-arrow">
               ↗
             </span>
@@ -34,7 +40,7 @@ export default function SiteFooter({ year }: { year: number }) {
         </nav>
 
         <p className="footer-copyright">
-          © {year} {siteContent.copyrightName}
+          © {year} {site.copyrightName}
         </p>
       </div>
     </footer>

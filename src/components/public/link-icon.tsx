@@ -1,4 +1,4 @@
-import type { LinkIconName } from "@/features/public/content";
+import type { PublicLinkIcon as LinkIconName } from "@/features/content/types/public-content";
 
 const ICON_PATHS: Record<LinkIconName, React.ReactNode> = {
   grid: (

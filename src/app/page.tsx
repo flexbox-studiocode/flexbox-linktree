@@ -1,4 +1,5 @@
 import { copyrightYear } from "@/features/public/copyright";
+import { getPublicContent } from "@/features/content/services/content";
 
 import ContactCta from "@/components/public/contact-cta";
 import Directory from "@/components/public/directory";
@@ -9,26 +10,35 @@ import SiteHeader from "@/components/public/site-header";
 /**
  * Public microsite — Flexbox Studio Digital Hub.
  *
- * Phase 2 renders from the in-repository content configuration. Later phases
- * replace it with database-backed queries while keeping the same component
- * interface, so presentation components stay unchanged.
+ * Content is loaded server-side from PostgreSQL through the content service,
+ * which returns published, active records only. A database failure degrades to
+ * an explicit empty directory plus documented branding copy; it never falls
+ * back to unpublished or static link data.
  */
-export default function PublicPage() {
+export default async function PublicPage() {
+  const { content } = await getPublicContent();
+  const { site, categories } = content;
+
   return (
     <div id="atas">
       <a className="skip-link" href="#konten">
         Lewati ke konten utama
       </a>
 
-      <SiteHeader />
+      <SiteHeader site={site} />
 
       <main id="konten">
-        <Hero />
-        <Directory />
-        <ContactCta />
+        <Hero site={site} />
+        <Directory
+          categories={categories}
+          directoryDescription={site.directoryDescription}
+          directoryEyebrow={site.directoryEyebrow}
+          directoryTitle={site.directoryTitle}
+        />
+        <ContactCta site={site} />
       </main>
 
-      <SiteFooter year={copyrightYear} />
+      <SiteFooter site={site} year={copyrightYear} />
     </div>
   );
 }
