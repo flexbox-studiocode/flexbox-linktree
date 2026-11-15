@@ -28,6 +28,8 @@ const ALLOWED_METADATA_KEYS = new Set([
   "authVersion",
   "removedBuckets",
   "removedResetTokens",
+  "removedInvitations",
+  "accountRole",
   "expiresAt",
   "targetType",
   // Phase 5 CMS audit metadata. All values are non-secret bookkeeping strings or

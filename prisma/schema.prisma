@@ -304,6 +304,10 @@ enum SecurityEventType {
   ACCOUNT_ACTIVATED
   ACCOUNT_SUSPENDED
   ACCOUNT_DISABLED
+  /// Permanent removal of an administrator row. The audit trail keeps the
+  /// deleted account id in `target_id` after the foreign key is nulled, so the
+  /// history survives the deletion.
+  ADMIN_ACCOUNT_DELETED
   PASSWORD_CHANGED
   PASSWORD_RESET_REQUESTED
   PASSWORD_RESET_COMPLETED

@@ -59,7 +59,9 @@ The CMS reuses the Phase 4 provisioning and lifecycle services rather than re-im
 
 - Inviting creates a single-use invitation and displays the raw token exactly once for private delivery. The token is never re-readable; issue a new invitation to replace it.
 - Acceptance remains CLI-only (`pnpm admin:accept-invite`), so a leaked CMS session cannot set an account password.
-- The acting administrator cannot suspend or disable their own account, and the last `ACTIVE` `SUPER_ADMIN` cannot be suspended or disabled.
+- The acting administrator cannot suspend, disable, or permanently delete their own account. The last `ACTIVE` `SUPER_ADMIN` cannot be suspended, disabled, or deleted.
+- Permanent deletion is available only to an active `SUPER_ADMIN`. It requires typing the target account's email address, runs inside a transaction with `SELECT … FOR UPDATE` locks, revokes pending invitations, removes reset tokens and the account throttle bucket, then removes the account row.
+- The `ADMIN_ACCOUNT_DELETED` audit event preserves the deleted account ID and non-secret bookkeeping after the account's foreign-key reference is nulled. Audit history remains append-only.
 - Status changes go through the atomic lifecycle service, which locks the account row and increments `authVersion`.
 
 ## 7. Audit logs and system status

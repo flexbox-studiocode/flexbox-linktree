@@ -2,9 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireAdminAction } from "@/lib/auth/session";
+import { requireAdminAction, requireSuperAdminAction } from "@/lib/auth/session";
 import {
   changeAdministratorStatus,
+  deleteAdministrator,
   inviteAdministrator,
   revokeAdministratorInvitation,
 } from "@/features/admin/services/admin-management";
@@ -108,5 +109,29 @@ export async function changeAdministratorStatusAction(
     };
   } catch (error) {
     return adminContentErrorState(error, "Status akun gagal diubah.");
+  }
+}
+
+export async function deleteAdministratorAction(
+  _previous: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  try {
+    const admin = await requireSuperAdminAction();
+
+    const result = await deleteAdministrator({
+      actor: { adminId: admin.id, actorEmail: admin.email },
+      adminUserId: text(formData, "adminUserId"),
+      confirmation: text(formData, "confirmation"),
+    });
+
+    revalidatePath("/admin/administrators");
+
+    return {
+      status: "success",
+      message: `Akun ${result.accountEmail} dihapus permanen. Sesi, undangan, dan token pemulihan akun tersebut telah dicabut.`,
+    };
+  } catch (error) {
+    return adminContentErrorState(error, "Akun administrator gagal dihapus.");
   }
 }

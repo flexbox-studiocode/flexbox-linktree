@@ -1,5 +1,6 @@
 import {
   AdminStatusForm,
+  DeleteAdminForm,
   InviteAdminForm,
   RevokeInvitationForm,
 } from "@/components/admin/administrator-controls";
@@ -56,6 +57,8 @@ export default async function AdminAdministratorsPage() {
             const invitation = account.invitation;
             const invitationState = deriveInvitationState(invitation);
             const isSelf = account.id === current.id;
+            const isLastActiveOwner =
+              account.status === "ACTIVE" && account.role === "SUPER_ADMIN" && counts.active <= 1;
 
             return (
               <li key={account.id}>
@@ -97,6 +100,16 @@ export default async function AdminAdministratorsPage() {
 
                       {invitation && invitationState === "pending" ? (
                         <RevokeInvitationForm invitationId={invitation.id} />
+                      ) : null}
+
+                      {current.isSuperAdmin && !isSelf ? (
+                        isLastActiveOwner ? (
+                          <p className="text-xs font-medium text-[var(--muted)]">
+                            Super Admin aktif terakhir tidak dapat dihapus.
+                          </p>
+                        ) : (
+                          <DeleteAdminForm accountEmail={account.email} adminUserId={account.id} />
+                        )
                       ) : null}
                     </div>
                   </div>

@@ -99,3 +99,18 @@ export async function requireAdminAction(): Promise<AuthorizedAdmin> {
 
   return admin;
 }
+
+/**
+ * Server Action variant of the SUPER_ADMIN requirement. Like
+ * `requireAdminAction()` it never redirects, so a Server Action can return a
+ * safe error state instead of navigating away mid-mutation.
+ */
+export async function requireSuperAdminAction(): Promise<AuthorizedAdmin> {
+  const admin = await requireAdminAction();
+
+  if (!admin.isSuperAdmin) {
+    throw new AuthorizationError("unauthorized");
+  }
+
+  return admin;
+}
