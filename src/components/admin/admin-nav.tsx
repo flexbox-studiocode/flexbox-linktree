@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Dasbor", exact: true },
+  { href: "/admin/analytics", label: "Analitik" },
   { href: "/admin/links", label: "Tautan" },
   { href: "/admin/categories", label: "Kategori" },
   { href: "/admin/media", label: "Media" },
