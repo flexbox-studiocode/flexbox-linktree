@@ -144,18 +144,20 @@ Phase 4 status: **complete.** 15 test files / 156 tests pass, lint and typecheck
 **Goal:** Enable content and website administration without code changes.
 
 Tasks:
-- [ ] Build admin shell and navigation.
-- [ ] Build dashboard overview.
-- [ ] Build link CRUD, reorder, publish, unpublish, archive, restore, and delete flows.
-- [ ] Build category management.
-- [ ] Build website settings for branding, hero, contact, social, footer, and SEO.
-- [ ] Build media library and validated upload flow.
-- [ ] Build account provisioning/management for Super Admins.
-- [ ] Build audit logs.
-- [ ] Add published-site view (no draft preview route in the initial requirement).
-- [ ] Add empty, loading, success, and error states.
+- [x] Build admin shell and navigation.
+- [x] Build dashboard overview.
+- [x] Build link CRUD, reorder, publish, unpublish, archive, restore, and delete flows.
+- [x] Build category management.
+- [x] Build website settings for branding, hero, contact, social, footer, and SEO.
+- [x] Build media library and validated upload flow.
+- [x] Build account provisioning/management for Super Admins.
+- [x] Build audit logs.
+- [x] Add published-site view (no draft preview route in the initial requirement).
+- [x] Add empty, loading, success, and error states.
 
 **Exit criteria:** an authorized Super Admin can manage all public content without source-code changes.
+
+Phase 5 status: **complete and verified locally.** The protected CMS includes content, settings, media, administrator, audit-log, and system-status screens. Server-side authorization is enforced for protected reads and mutations. Media uploads use content validation and reference protection. Verification: `pnpm test` (23 files / 244 tests), `pnpm typecheck`, `pnpm lint`, and `pnpm build` pass.
 
 ## Phase 6 — Advanced Analytics
 

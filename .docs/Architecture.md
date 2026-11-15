@@ -87,7 +87,7 @@ Use Server Components by default. Add Client Components only for interactive con
 | `/admin/login` | Admin sign-in | Public route, authentication only |
 | `/admin/forgot-password` | Request a recovery link | Public route, authentication only |
 | `/admin/reset-password` | Complete recovery with a single-use token | Public route, authentication only |
-| `/admin` | Admin landing page (Phase 5 builds the dashboard) | Super Admin |
+| `/admin` | Admin dashboard | Super Admin |
 | `/admin/security` | Signed-in password change and session revocation | Super Admin |
 | `/admin/links` | Link management | Super Admin |
 | `/admin/links/new` | Create link | Super Admin |
@@ -98,10 +98,11 @@ Use Server Components by default. Add Client Components only for interactive con
 | `/admin/analytics` | Analytics overview | Super Admin |
 | `/admin/analytics/links` | Link performance | Super Admin |
 | `/admin/analytics/audience` | Device/browser/OS breakdown | Super Admin |
-| `/admin/admins` | Admin account management | Super Admin |
+| `/admin/administrators` | Admin account management | Super Admin |
 | `/admin/audit-logs` | Administrative audit history | Super Admin |
+| `/admin/system` | Operational status (database, storage, configuration) | Super Admin |
 
-Route names may be adjusted during implementation, but public/admin access boundaries must remain clear.
+Route names may be adjusted during implementation, but public/admin access boundaries must remain clear. `/admin/system` is an operational addition beyond the original list; the analytics routes remain Phase 6.
 
 ## 6. Domain Modules
 
@@ -187,8 +188,8 @@ Use a storage interface so local storage and production object storage can be sw
 
 **Storage decision (recorded):**
 
-- **Local development:** a `LocalStorageAdapter` writes to the ignored `storage/uploads/` directory. The directory is persistent across Next.js restarts but is local-only and never committed.
-- **Production:** use an S3-compatible object-storage provider with a separate backup and lifecycle policy. The provider, bucket, region, endpoint, and credentials remain deployment decisions and are not required for Phase 0 or Phase 1.
+- **Local development:** a `LocalStorageAdapter` writes to the ignored `.local-storage/uploads/` directory. The directory is persistent across Next.js restarts but is local-only and never committed. When the driver cannot expose a public URL, `/media/[...key]` serves the file after resolving the key in `media_assets`.
+- **Production:** use an S3-compatible object-storage provider with a separate backup and lifecycle policy. `MEDIA_STORAGE_DRIVER=s3` selects the bundled S3 adapter, which works with AWS S3, Cloudflare R2, MinIO, and other compatible providers. The bucket, region, endpoint, and credentials remain deployment decisions supplied through environment variables; the local driver refuses to run in production.
 - **Boundary:** CMS code depends on the storage interface, not a provider SDK. Only a storage adapter reads provider-specific configuration.
 
 This decision avoids external credentials during foundation work while preventing production media from being placed in an ephemeral application container.
@@ -283,15 +284,16 @@ Prisma CLI does not inherit Next.js environment loading. `prisma7.config.ts` loa
 
 The repository currently contains:
 
-- Next.js App Router application, TypeScript strict mode, Tailwind CSS v4 tokens, and the public microsite (Phase 2, preserved).
-- Prisma 7 with the `pg` driver adapter and the `SystemCheck` health-check model plus the content domain: `categories`, `links`, `site_settings`, and `media_assets`, with enums, foreign keys, CHECK constraints, and indexes (Phase 3).
+- Next.js App Router application, TypeScript strict mode, Tailwind CSS v4 tokens, the public microsite (Phase 2, preserved), and the protected CMS (Phase 5, complete).
+- Prisma 7 with the `pg` driver adapter, the `SystemCheck` health-check model, the content domain (`categories`, `links`, `site_settings`, `media_assets`), and the administrator domain (`admin_users`, `admin_invitations`, `password_reset_tokens`, `admin_rate_limits`, `security_events`), with enums, foreign keys, CHECK constraints, and indexes.
 - A typed content layer in `src/features/content`: Zod schemas, repositories, mappers, and services. The public route reads published, active content from PostgreSQL through `getPublicContent()`.
-- Administrator identity tables (`admin_users`, `admin_invitations`, `password_reset_tokens`, `admin_rate_limits`, `security_events`) and the authentication/authorization modules described in section 6.2 (Phase 4).
-- `/admin/login`, `/admin` (authenticated placeholder), `/admin/security`, `/admin/forgot-password`, and `/admin/reset-password`, plus the Auth.js route at `/api/auth/[...nextauth]`.
+- CMS services in `src/features/admin`: content mutations, settings, media, administrator management, dashboard, audit logs, and system status. Server Actions in `src/features/admin/actions` call `requireAdminAction()` and `requireSuperAdmin()` server-side.
+- Auth.js v4 Credentials sign-in, Argon2id hashing, server-side authorization (`requireAdmin`, `requireSuperAdmin`, `requireAdminAction`), and internal provisioning CLIs (Phase 4).
+- Media storage abstraction (`src/lib/storage/`): `LocalStorageAdapter` (local filesystem), `S3StorageAdapter` (custom SigV4, any S3-compatible provider), and a media serving route at `/media/[...key]`.
 - Development seed data in `prisma/seed-data.ts`, upserted by `pnpm db:seed`.
 - Lint, typecheck, unit/integration test, production build, visual QA, and accessibility QA scripts.
 
-Nothing in this section implies that CMS content screens, media upload, analytics, or deployment exist yet. Those are later phases. `.docs/DATABASE_SCHEMA.md` documents the schema, and `.docs/AUTH_SECURITY.md` documents the security model.
+Analytics collection and reporting (Phase 6) and production deployment (Phase 8) are the remaining phases. `.docs/DATABASE_SCHEMA.md` documents the schema, `.docs/AUTH_SECURITY.md` documents the security model, and `.docs/ADMIN_CMS.md` documents the CMS screens and verification record.
 
 ## 12. Database Migration and Release
 

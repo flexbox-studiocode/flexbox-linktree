@@ -125,7 +125,7 @@ flexbox-linktree/
 └── .gitignore
 ```
 
-Phase 4 added `src/features/auth`, `src/lib/auth`, `src/lib/security`, `src/lib/mail`, `src/app/admin`, `src/app/api/auth`, and `src/proxy.ts`. Phase 5 and later add `src/components/admin`, media storage adapters, and analytics modules. The public presentation components already consume typed DTO props, so later CMS work does not require rewriting them.
+Phase 4 added `src/features/auth`, `src/lib/auth`, `src/lib/security`, `src/lib/mail`, `src/app/admin`, `src/app/api/auth`, and `src/proxy.ts`. Phase 5 added `src/components/admin`, the protected CMS routes under `src/app/admin/(protected)`, `src/features/admin`, `src/features/media`, `src/lib/storage`, and the media serving route `src/app/media/[...key]`. Robust media binaries are not stored in PostgreSQL. Phase 6 adds the analytics modules. The public presentation components already consume typed DTO props, so CMS work does not require rewriting them.
 
 ### 2.2 Target structure
 

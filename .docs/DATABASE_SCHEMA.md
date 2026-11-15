@@ -70,7 +70,7 @@ Current keys:
 
 ### `media_assets`
 
-Metadata foundation for future media management. PostgreSQL stores the original name, unique storage key, MIME type, size, optional dimensions, alt text, and timestamps. Binary files are not stored in PostgreSQL. Upload UI and storage-provider integration belong to Phase 5/deployment.
+Metadata for the CMS media library. PostgreSQL stores the original name, unique storage key, MIME type, size, optional dimensions, alt text, and timestamps. Binary files are not stored in PostgreSQL: they are written through the storage abstraction in `src/lib/storage/` (`local` under `.local-storage/uploads/` in development, S3-compatible in production). Deletion is refused while a `links.icon` or a site-settings image still points at the asset's storage key.
 
 ## Enums
 
@@ -193,14 +193,16 @@ Unique on `(scope, key_hash)`. Raw email addresses and raw IP addresses are neve
 
 ### `security_events`
 
-Append-only audit trail for authentication and lifecycle events. `admin_user_id` and `target_id` are nullable so events survive account deletion, and `safe_metadata` never contains passwords, hashes, tokens, or raw addresses.
+Append-only audit trail for authentication and lifecycle events. `admin_user_id` and `target_id` are nullable so events survive account deletion, and `safe_metadata` never contains passwords, hashes, tokens, or raw addresses. Since Phase 5 the same table also carries CMS content events (link, category, settings, and media changes), so an operator reviews authentication and content history in one place. Content rows are still never hard-deleted through audit history.
 
 ## Administrator enums
 
 - `admin_role`: `SUPER_ADMIN`
 - `admin_account_status`: `INVITED`, `ACTIVE`, `SUSPENDED`, `DISABLED`
 - `rate_limit_scope`: `ACCOUNT`, `SOURCE`
-- `security_event_type`: `LOGIN_SUCCEEDED`, `LOGIN_FAILED`, `LOGIN_BLOCKED`, `INVITATION_CREATED`, `INVITATION_REVOKED`, `INVITATION_ACCEPTED`, `ACCOUNT_BOOTSTRAPPED`, `ACCOUNT_ACTIVATED`, `ACCOUNT_SUSPENDED`, `ACCOUNT_DISABLED`, `PASSWORD_CHANGED`, `PASSWORD_RESET_REQUESTED`, `PASSWORD_RESET_COMPLETED`, `SESSION_REVOKED`, `RATE_LIMIT_CLEANUP`
+- `security_event_type`: `LOGIN_SUCCEEDED`, `LOGIN_FAILED`, `LOGIN_BLOCKED`, `INVITATION_CREATED`, `INVITATION_REVOKED`, `INVITATION_ACCEPTED`, `ACCOUNT_BOOTSTRAPPED`, `ACCOUNT_ACTIVATED`, `ACCOUNT_SUSPENDED`, `ACCOUNT_DISABLED`, `PASSWORD_CHANGED`, `PASSWORD_RESET_REQUESTED`, `PASSWORD_RESET_COMPLETED`, `SESSION_REVOKED`, `RATE_LIMIT_CLEANUP`, plus the Phase 5 CMS events `LINK_CREATED`, `LINK_UPDATED`, `LINK_PUBLISHED`, `LINK_UNPUBLISHED`, `LINK_ARCHIVED`, `LINK_RESTORED`, `LINK_DELETED`, `LINK_REORDERED`, `CATEGORY_CREATED`, `CATEGORY_UPDATED`, `CATEGORY_ACTIVATED`, `CATEGORY_DEACTIVATED`, `CATEGORY_REORDERED`, `CATEGORY_DELETED`, `SETTINGS_UPDATED`, `MEDIA_UPLOADED`, `MEDIA_UPDATED`, `MEDIA_DELETED`
+
+The Phase 5 values were added by the additive migration `20261115110654_add_cms_audit_events`, which only extends the existing PostgreSQL enum.
 
 ## Administrator constraints
 
@@ -230,14 +232,14 @@ A pre-Phase-3 local backup was saved outside Git under `.local-storage/backups/`
 
 ## Caching
 
-The public service uses Next.js 16 Cache Components with `use cache`, `cacheLife("minutes")`, and a `public-content` cache tag. This gives a one-minute revalidation window and one-hour expiry. The tag is prepared for future authenticated CMS mutations; no unauthenticated revalidation endpoint exists in Phase 3.
+The public service uses Next.js 16 Cache Components with `use cache`, `cacheLife("minutes")`, and a `public-content` cache tag. This gives a one-minute revalidation window and one-hour expiry. Since Phase 5, authenticated CMS mutations invalidate that tag through `updateTag("public-content")` and revalidate the `/` path, so published changes appear without waiting for expiry. No unauthenticated revalidation endpoint exists.
 
 ## Data retention and deletion
 
-Phase 3 creates no analytics event table. Future analytics must preserve historical references using nullable relationships or snapshots rather than cascading deletion from content. Raw analytics retention is a later decision with the initial documented target of 90 days. Media binaries will use the storage abstraction and independent production storage; they are not database blobs.
+Phase 3 creates no analytics event table. Future analytics must preserve historical references using nullable relationships or snapshots rather than cascading deletion from content. Raw analytics retention is a later decision with the initial documented target of 90 days. Media binaries use the storage abstraction and independent production storage; they are not database blobs.
 
 Administrator rows are never hard-deleted by application code. Status transitions (`SUSPENDED`, `DISABLED`) preserve the audit trail, and `security_events` keeps nullable references so history survives a manual removal. `pnpm admin:cleanup` removes only expired reset tokens and stale throttle rows; invitations and security events are retained as audit data.
 
 ## Future boundaries
 
-Phase 4 owns authentication, authorization, provisioning, recovery, throttling, and security events; it is complete. Phase 5 owns CMS CRUD, publication mutations, media upload, and the audit-log UI. Phase 6 owns analytics.
+Phase 4 owns authentication, authorization, provisioning, recovery, throttling, and security events; it is complete. Phase 5 owns CMS CRUD, publication mutations, media upload, and the audit-log UI; it is complete. Phase 6 owns analytics.

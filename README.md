@@ -11,7 +11,7 @@ The public experience is deliberately a microsite, not an application dashboard.
 
 ## Status
 
-**Phase 4 — Authentication and Authorization** is complete: the admin area requires an explicitly provisioned Flexbox Super Admin, verified with Argon2id credentials, and every protected read and mutation re-authorizes against the database. Phase 3 (database-backed content), Phase 2 (public microsite), and Phase 1 (local environment) remain in place.
+**Phase 5 — Full CMS** is complete: an authorized Flexbox Super Admin can manage categories, links, site settings, the media library, and administrator accounts from a protected CMS, with audit logging and system status, without source-code changes. Phase 4 (authentication and authorization), Phase 3 (database-backed content), Phase 2 (public microsite), and Phase 1 (local environment) remain in place.
 
 Implemented at this point:
 
@@ -22,6 +22,12 @@ Implemented at this point:
 - Typed content layer in `src/features/content`: Zod validation, server-only repositories, DTO mappers, and cached services. The public route reads published, active records only.
 - Administrator identity schema (`admin_users`, `admin_invitations`, `password_reset_tokens`, `admin_rate_limits`, `security_events`) with additive migrations.
 - Credentials sign-in at `/admin/login` using Auth.js v4 with JWT sessions, Argon2id password hashes, and database-backed login throttling.
+- Protected CMS at `/admin`: dashboard, links, categories, settings, media, administrators, audit logs, and system status. Every page, Server Action, and data service re-authorizes on the server.
+- Link and category CRUD with reordering, publish/unpublish, archive, restore, and delete; typed site settings for branding, hero, contact, social, footer, and SEO.
+- Media library with validated upload: real content-type detection by magic bytes, SVG rejection, size limits, metadata editing, reference-protected deletion, and local or S3-compatible storage through `src/lib/storage/`.
+- Administrator management that reuses the Phase 4 provisioning and lifecycle services, with self-lockout and last-active-admin protection; invitation tokens are shown once for private delivery.
+- Audit trail: authentication and CMS content events share the append-only `security_events` table and are readable at `/admin/audit-logs`.
+- Public cache invalidation on CMS mutation through the `public-content` tag and the `/` path.
 - Internal provisioning only: bootstrap, invitation, invitation acceptance, status, and cleanup CLIs. No public registration.
 - Server-side authorization for protected pages, Server Actions, and data services, with immediate revocation through `authVersion`.
 - Sign-out, signed-in password change, forgot-password, and reset-password flows; the development mail transport writes to `.local-storage/mail/` and refuses to run in production.
@@ -33,10 +39,11 @@ Implemented at this point:
 
 Not implemented yet (later roadmap phases):
 
-- CMS dashboard, link/category/settings/media screens, and content CRUD (Phase 5). `/admin` is an authenticated placeholder.
-- Multi-factor authentication and a production transactional mail provider.
 - Analytics collection and reporting (Phase 6).
+- Multi-factor authentication and a production transactional mail provider.
 - Production deployment, Coolify, and staging infrastructure (Phase 8).
+
+Deliberate scope decisions in Phase 5: no draft-preview route on the public site (public preview is published content only), invitation acceptance stays CLI-only (`pnpm admin:accept-invite`), SVG uploads are rejected rather than sanitized, and only the `SUPER_ADMIN` role is supported.
 
 Content still awaiting owner confirmation: six directory destinations, the public contact channel, and the final production domain. They are stored as non-interactive states (`destinationType = NONE`, `contact.contactEmail = null`), so resolving them is a data change rather than a code change. See `.docs/Roadmap.md`, `.docs/PUBLIC_PAGE.md`, and `.docs/DATABASE_SCHEMA.md`.
 
@@ -79,6 +86,7 @@ pnpm install
 # 3. Create local environment variables (never commit this file)
 Copy-Item .env.example .env.local
 # then set DATABASE_URL, NEXTAUTH_URL, NEXTAUTH_SECRET, and RATE_LIMIT_SECRET
+# media uploads default to the local driver under .local-storage/uploads/
 
 # 4. Apply migrations, generate the Prisma client, and seed content
 pnpm db:migrate:deploy
@@ -112,6 +120,7 @@ Full Windows instructions, environment-variable rules, database commands, reset 
 | `.docs/Roadmap.md` | Phases and measurable exit criteria. |
 | `.docs/DATABASE_SCHEMA.md` | Content tables, relationships, constraints, indexes, publication lifecycle, destination model, and seed/migration commands. |
 | `.docs/AUTH_SECURITY.md` | Authentication model, authorization boundary, provisioning, recovery, threat model, and verification record. |
+| `.docs/ADMIN_CMS.md` | CMS screens, authorization requirements, content workflow, media rules, and verification record. |
 | `.docs/PUBLIC_PAGE.md` | Public page sections, content model, destination policy, and QA commands. |
 | `.docs/LOCAL_DEVELOPMENT.md` | Repeatable local Windows setup. |
 | `.docs/Desain.md` | Visual design authority for the public microsite (kept in its original Indonesian form). |

@@ -124,6 +124,8 @@ Optional development controls:
 | `ADMIN_MAIL_TRANSPORT` | Set `file` to write recovery mail under `.local-storage/mail/` |
 | `ADMIN_BOOTSTRAP_ENABLED` | Temporarily set `true` for the one-time first-admin CLI |
 | `ADMIN_BOOTSTRAP_EMAIL`, `ADMIN_BOOTSTRAP_NAME` | Identity values consumed by the bootstrap CLI |
+| `MEDIA_STORAGE_DRIVER` | Keep the default `local` for development; production requires `s3` |
+| `MEDIA_LOCAL_ROOT`, `MEDIA_LOCAL_PUBLIC_URL` | Optional overrides for the local media directory and public base URL |
 
 Local `DATABASE_URL` value:
 
@@ -244,6 +246,19 @@ Then sign in at <http://localhost:3000/admin/login>. Every CLI prints only accou
 Password recovery writes a JSON message with the reset link to `.local-storage/mail/` when `ADMIN_MAIL_TRANSPORT="file"` (the default outside production). Deleting that folder only removes local development mail. Never rely on this transport in staging or production.
 
 Full security behaviour, threat model, and limits are recorded in `.docs/AUTH_SECURITY.md`.
+
+## 9a. CMS and Media Storage (Phase 5)
+
+After signing in, the CMS lives at <http://localhost:3000/admin>. Content, settings, media, administrator, audit-log, and system-status screens are all reachable from the admin navigation.
+
+Media uploads use the local driver by default and are written to `.local-storage/uploads/`, which is git-ignored. You do not need to configure anything to try the upload flow locally. To point uploads elsewhere, set `MEDIA_LOCAL_ROOT`; to serve them through a custom base URL, set `MEDIA_LOCAL_PUBLIC_URL`.
+
+```powershell
+# Optional: confirm the local media directory after an upload
+Get-ChildItem .local-storage\uploads -Recurse -File
+```
+
+Production must set `MEDIA_STORAGE_DRIVER="s3"` with the `S3_*` credentials; the local driver refuses to run in production unless `MEDIA_ALLOW_LOCAL_IN_PRODUCTION="true"`. See `.docs/ADMIN_CMS.md` for the full media and CMS reference.
 
 ## 10. Safe Database Reset
 

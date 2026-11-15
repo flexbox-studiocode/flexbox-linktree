@@ -94,11 +94,18 @@ Rules enforced in review:
 - Server Actions call `requireAdminAction()` themselves. The proxy matcher can miss paths, so it is never the only check.
 - Repositories and services in `src/features/auth` import `server-only`; none of them may be imported by a Client Component.
 
+Phase 5 extends the same boundary to the CMS. Every protected page under `src/app/admin/(protected)` calls `requireAdmin()` in its layout and page; every CMS Server Action in `src/features/admin/actions` calls `requireAdminAction()` (account management adds `requireSuperAdmin()`); and the admin content, settings, media, audit, and administrator data services are `server-only`. The media serving route `/media/[...key]` is deliberately public because published content references those files, but it resolves the key in `media_assets` and never exposes the storage backend directly.
+
 `src/proxy.ts` is an optimistic early gate only. It verifies the JWT signature with `getToken` to decide between rendering and redirecting, uses an explicit `PUBLIC_ADMIN_PATHS` allowlist so new pages default to private, refuses closed when no signing secret is configured, and never reads the database. It carries the intended destination as a sanitized `?callbackUrl=`.
 
 ## 6. Provisioning
 
-Three controlled procedures, all CLI-only in Phase 4:
+Provisioning has two surfaces:
+
+- Operator CLIs (Phase 4).
+- An authenticated CMS invitation screen (Phase 5) at `/admin/administrators`, which reuses `createInvitationForAdmin` and `revokeInvitationById` from the same provisioning service. Invitation acceptance stays CLI-only, so no CMS path can set an account password.
+
+CLI commands:
 
 | Command | Purpose | Guard |
 | --- | --- | --- |
@@ -168,6 +175,7 @@ Known limitations, accepted for Phase 4:
 | `ADMIN_BOOTSTRAP_ENABLED` | No | `true` enables the one-time bootstrap CLI |
 | `ADMIN_BOOTSTRAP_EMAIL`, `ADMIN_BOOTSTRAP_NAME` | No | Bootstrap identity |
 | `ADMIN_MAIL_TRANSPORT` | No | `file` selects the development file transport |
+| `MEDIA_STORAGE_DRIVER`, `S3_*` | No | Phase 5 media storage; see `.docs/ADMIN_CMS.md` |
 
 Rotating `NEXTAUTH_SECRET` invalidates all sessions. Rotating `RATE_LIMIT_SECRET` resets source buckets, which is acceptable during an incident and should be deliberate otherwise.
 
@@ -195,5 +203,14 @@ Executed on 2026-11-15 against the local PostgreSQL container (`flexbox-linktree
 | Disabled account | `pnpm admin:set-status --status=DISABLED`, then sign-in | Rejected; `authVersion` incremented, existing session revoked |
 | Foreign `callbackUrl` | Credentials callback with `https://evil.example/steal` | Not used as a redirect target |
 | CLIs | `pnpm admin:cleanup`, `pnpm admin:set-status` (no args) | Cleanup succeeded; missing-argument path exits with usage |
+
+Phase 5 re-ran the automated checks after the CMS landed:
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Unit and integration tests | `pnpm test` | 23 files, 244 tests passed |
+| Lint | `pnpm lint` | No findings |
+| Types | `pnpm typecheck` | No errors |
+| Production build | `pnpm build` | Succeeded |
 
 The integration tests create and remove only their own rows, and they skip when no local database is reachable.
