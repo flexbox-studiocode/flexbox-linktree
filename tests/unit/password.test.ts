@@ -5,6 +5,7 @@ import {
   checkPasswordPolicy,
   hashPassword,
   needsRehash,
+  PASSWORD_MIN_LENGTH,
   verifyPassword,
 } from "@/lib/security/password";
 
@@ -84,11 +85,14 @@ describe("argon2id password hashing", () => {
 describe("password policy", () => {
   it("accepts a compliant password", () => {
     expect(checkPasswordPolicy(GOOD_PASSWORD)).toBeNull();
-    expect(checkPasswordPolicy("x".repeat(12))).toBeNull();
+    expect(checkPasswordPolicy("x".repeat(PASSWORD_MIN_LENGTH))).toBeNull();
   });
 
   it("rejects short, blank, oversized, and non-string input", () => {
-    expect(checkPasswordPolicy("short")).toMatch(/at least 12/);
+    expect(checkPasswordPolicy("x".repeat(PASSWORD_MIN_LENGTH - 1))).toMatch(
+      new RegExp(`at least ${PASSWORD_MIN_LENGTH}`),
+    );
+    expect(checkPasswordPolicy("short")).toMatch(/at least 8/);
     expect(checkPasswordPolicy("            ")).toMatch(/blank/);
     expect(checkPasswordPolicy("x".repeat(257))).toMatch(/at most 256/);
     expect(checkPasswordPolicy(undefined)).toMatch(/string/);

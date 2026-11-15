@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import { completePasswordResetAction } from "@/features/auth/actions/account";
 import { IDLE_STATE } from "@/features/auth/actions/form-state";
+import { PASSWORD_MIN_LENGTH } from "@/lib/security/password-policy";
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const [state, formAction, isPending] = useActionState(completePasswordResetAction, IDLE_STATE);
@@ -19,12 +20,12 @@ export function ResetPasswordForm({ token }: { token: string }) {
           autoComplete="new-password"
           className="mt-2 block min-h-12 w-full rounded-xl border border-[var(--line)] bg-white px-4 text-base text-[var(--ink)] shadow-sm outline-none transition focus:border-[var(--blue-strong)] focus:ring-4 focus:ring-[var(--blue-soft)]"
           id="reset-new-password"
-          minLength={12}
+          minLength={PASSWORD_MIN_LENGTH}
           name="newPassword"
           required
           type="password"
         />
-        <p className="mt-2 text-xs text-[var(--muted)]">Minimal 12 karakter.</p>
+        <p className="mt-2 text-xs text-[var(--muted)]">Minimal {PASSWORD_MIN_LENGTH} karakter.</p>
       </div>
       <div>
         <label className="block text-sm font-semibold text-[var(--ink)]" htmlFor="reset-confirm-password">
@@ -34,7 +35,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
           autoComplete="new-password"
           className="mt-2 block min-h-12 w-full rounded-xl border border-[var(--line)] bg-white px-4 text-base text-[var(--ink)] shadow-sm outline-none transition focus:border-[var(--blue-strong)] focus:ring-4 focus:ring-[var(--blue-soft)]"
           id="reset-confirm-password"
-          minLength={12}
+          minLength={PASSWORD_MIN_LENGTH}
           name="confirmPassword"
           required
           type="password"

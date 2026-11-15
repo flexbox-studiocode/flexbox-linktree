@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 
 import { LifecycleError, changeOwnPassword } from "@/features/auth/services/account-lifecycle";
 import { requireAdminAction } from "@/lib/auth/session";
+import { PASSWORD_MIN_LENGTH } from "@/lib/security/password-policy";
 import { resolveSourceIdentifier } from "@/lib/security/client-source";
 import {
   completePasswordReset,
@@ -16,14 +17,14 @@ import type { FormState } from "./form-state";
 const LIFECYCLE_MESSAGES: Record<LifecycleError["code"], string> = {
   not_found: "Akun administrator tidak ditemukan.",
   invalid_current_password: "Kata sandi saat ini tidak benar.",
-  invalid_password: "Kata sandi baru tidak memenuhi kebijakan (minimal 12 karakter).",
+  invalid_password: `Kata sandi baru tidak memenuhi kebijakan (minimal ${PASSWORD_MIN_LENGTH} karakter).`,
   same_password: "Pilih kata sandi yang belum pernah digunakan.",
   invalid_transition: "Perubahan tidak diizinkan.",
 };
 
 const RESET_MESSAGES: Record<ResetError["code"], string> = {
   invalid_token: "Tautan pengaturan ulang tidak valid, sudah digunakan, atau sudah kedaluwarsa.",
-  invalid_password: "Kata sandi baru tidak memenuhi kebijakan (minimal 12 karakter).",
+  invalid_password: `Kata sandi baru tidak memenuhi kebijakan (minimal ${PASSWORD_MIN_LENGTH} karakter).`,
 };
 
 /** Self-service password change (requires re-entry of current password). */

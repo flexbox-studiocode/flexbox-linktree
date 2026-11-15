@@ -2,6 +2,10 @@ import "server-only";
 
 import { Algorithm, hash, parseOptions, verify } from "@node-rs/argon2";
 
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "./password-policy";
+
+export { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH };
+
 /**
  * Argon2id password hashing.
  *
@@ -38,18 +42,13 @@ export const ARGON2ID_PARAMETERS: Argon2idParameters = {
   outputLen: 32,
 };
 
-/** Minimum accepted password length for administrator accounts. */
-export const PASSWORD_MIN_LENGTH = 12;
-/** Maximum accepted password length, to bound hashing cost from untrusted input. */
-export const PASSWORD_MAX_LENGTH = 256;
-
 export type PasswordHashOptions = Partial<Argon2idParameters>;
 
 /**
  * Returns a human-readable reason when a candidate password is unacceptable,
  * or `null` when it passes the administrator password policy.
  *
- * Policy: at least 12 characters, at most 256, and not only whitespace. Length
+ * Policy: at least 8 characters, at most 256, and not only whitespace. Length
  * is the property that actually resists offline cracking; composition rules are
  * deliberately not imposed beyond base character variety.
  */

@@ -65,7 +65,7 @@ The `session` callback rebuilds the browser-visible session from a fresh databas
 
 ### Password policy
 
-Minimum 12 characters, maximum 256, checked by `checkPasswordPolicy` on invitation acceptance, password change, and reset. Plaintext passwords are never stored, logged, or emitted in security-event metadata.
+Minimum 8 characters, maximum 256, checked by `checkPasswordPolicy` on invitation acceptance, password change, and reset. Plaintext passwords are never stored, logged, or emitted in security-event metadata.
 
 ## 4. Session handling
 
@@ -213,4 +213,4 @@ Phase 5 re-ran the automated checks after the CMS landed:
 | Types | `pnpm typecheck` | No errors |
 | Production build | `pnpm build` | Succeeded |
 
-The integration tests create and remove only their own rows, and they skip when no local database is reachable.
+The administrator password minimum is now 8 characters (maximum 256); the server-side policy and forms share the same constants. The integration tests create and remove only their own rows, and they skip when no local database is reachable.
