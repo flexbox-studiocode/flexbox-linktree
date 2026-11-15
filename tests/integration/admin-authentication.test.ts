@@ -300,6 +300,19 @@ describe.skipIf(!database)("administrator authentication (local database)", () =
     expect(stored?.keyHash).not.toContain(source);
   });
 
+  it("rejects malformed input before touching the database", async () => {
+    const { authenticateAdmin } = await import("@/features/auth/services/authenticate-admin");
+    const before = await prisma.securityEvent.count();
+
+    await expect(authenticateAdmin({ email: "not-an-email", password: "" })).resolves.toBeNull();
+    await expect(authenticateAdmin({ email: 42, password: null })).resolves.toBeNull();
+    await expect(authenticateAdmin({ email: "   ", password: "x" })).resolves.toBeNull();
+
+    const after = await prisma.securityEvent.count();
+
+    expect(after).toBe(before);
+  });
+
   it("records a successful login event without any credential material", async () => {
     const { authenticateAdmin } = await import("@/features/auth/services/authenticate-admin");
     const admin = await createActiveAdmin("event-success");

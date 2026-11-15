@@ -11,7 +11,7 @@ The public experience is deliberately a microsite, not an application dashboard.
 
 ## Status
 
-**Phase 3 — Content Database and CMS Foundation** is complete: the public page now loads its published content from PostgreSQL through a typed, server-validated content layer. Phase 2 (the public microsite) and Phase 1 (local environment and project foundation) remain in place.
+**Phase 4 — Authentication and Authorization** is complete: the admin area requires an explicitly provisioned Flexbox Super Admin, verified with Argon2id credentials, and every protected read and mutation re-authorizes against the database. Phase 3 (database-backed content), Phase 2 (public microsite), and Phase 1 (local environment) remain in place.
 
 Implemented at this point:
 
@@ -20,6 +20,11 @@ Implemented at this point:
 - Safe destination handling through `src/lib/utils/url.ts`; unconfirmed destinations render as non-interactive "Segera" cards rather than invented links.
 - PostgreSQL content schema (`categories`, `links`, `site_settings`, `media_assets`) with enums, foreign keys, CHECK constraints, and indexes.
 - Typed content layer in `src/features/content`: Zod validation, server-only repositories, DTO mappers, and cached services. The public route reads published, active records only.
+- Administrator identity schema (`admin_users`, `admin_invitations`, `password_reset_tokens`, `admin_rate_limits`, `security_events`) with additive migrations.
+- Credentials sign-in at `/admin/login` using Auth.js v4 with JWT sessions, Argon2id password hashes, and database-backed login throttling.
+- Internal provisioning only: bootstrap, invitation, invitation acceptance, status, and cleanup CLIs. No public registration.
+- Server-side authorization for protected pages, Server Actions, and data services, with immediate revocation through `authVersion`.
+- Sign-out, signed-in password change, forgot-password, and reset-password flows; the development mail transport writes to `.local-storage/mail/` and refuses to run in production.
 - Idempotent development seed in `prisma/seed-data.ts`, applied with `pnpm db:seed`.
 - Self-hosted Anton (display) and Manrope (body fallback) through `next/font`.
 - Page metadata, favicon, and `/robots.txt`.
@@ -28,8 +33,8 @@ Implemented at this point:
 
 Not implemented yet (later roadmap phases):
 
-- Admin authentication and authorization (Phase 4).
-- Admin dashboard, login UI, and link/category/settings/media CMS features (Phase 5).
+- CMS dashboard, link/category/settings/media screens, and content CRUD (Phase 5). `/admin` is an authenticated placeholder.
+- Multi-factor authentication and a production transactional mail provider.
 - Analytics collection and reporting (Phase 6).
 - Production deployment, Coolify, and staging infrastructure (Phase 8).
 
@@ -47,7 +52,8 @@ See `.docs/Roadmap.md` for the full phase plan and exit criteria.
 | Styling | Tailwind CSS v4 |
 | Database | PostgreSQL 17 |
 | ORM | Prisma ORM 7 (`prisma-client` generator, `@prisma/adapter-pg`) |
-| Authentication (planned) | Auth.js / NextAuth Credentials provider, JWT sessions |
+| Authentication | Auth.js / NextAuth v4 Credentials provider, JWT sessions |
+| Password hashing | Argon2id via `@node-rs/argon2` |
 | Package manager | pnpm 12 |
 | Local containers | Docker Compose (PostgreSQL only) |
 
@@ -72,7 +78,7 @@ pnpm install
 
 # 3. Create local environment variables (never commit this file)
 Copy-Item .env.example .env.local
-# then set DATABASE_URL and a locally generated AUTH_SECRET
+# then set DATABASE_URL, NEXTAUTH_URL, NEXTAUTH_SECRET, and RATE_LIMIT_SECRET
 
 # 4. Apply migrations, generate the Prisma client, and seed content
 pnpm db:migrate:deploy
@@ -84,6 +90,14 @@ pnpm dev
 ```
 
 Open `http://localhost:3000`.
+
+To create the first administrator, temporarily set `ADMIN_BOOTSTRAP_ENABLED="true"` plus `ADMIN_BOOTSTRAP_EMAIL` and `ADMIN_BOOTSTRAP_NAME` in `.env.local`, then run:
+
+```powershell
+pnpm admin:bootstrap
+```
+
+Turn `ADMIN_BOOTSTRAP_ENABLED` off afterwards; the command also refuses to run once any administrator exists. Sign in at `http://localhost:3000/admin/login`.
 
 Full Windows instructions, environment-variable rules, database commands, reset guidance, and troubleshooting live in `.docs/LOCAL_DEVELOPMENT.md`.
 
@@ -97,6 +111,7 @@ Full Windows instructions, environment-variable rules, database commands, reset 
 | `.docs/Structure_File.md` | Repository layout and conventions. |
 | `.docs/Roadmap.md` | Phases and measurable exit criteria. |
 | `.docs/DATABASE_SCHEMA.md` | Content tables, relationships, constraints, indexes, publication lifecycle, destination model, and seed/migration commands. |
+| `.docs/AUTH_SECURITY.md` | Authentication model, authorization boundary, provisioning, recovery, threat model, and verification record. |
 | `.docs/PUBLIC_PAGE.md` | Public page sections, content model, destination policy, and QA commands. |
 | `.docs/LOCAL_DEVELOPMENT.md` | Repeatable local Windows setup. |
 | `.docs/Desain.md` | Visual design authority for the public microsite (kept in its original Indonesian form). |
@@ -123,6 +138,11 @@ Brand assets live in `.flexbox/` (source) and `public/assets/` (web-ready copies
 | `pnpm db:seed` | Upsert the development content dataset (idempotent). |
 | `pnpm db:studio` | Open Prisma Studio. |
 | `pnpm db:check` | Run the local Prisma connectivity check. |
+| `pnpm admin:bootstrap` | Create the first Super Admin (requires `ADMIN_BOOTSTRAP_ENABLED=true`). |
+| `pnpm admin:invite` | Issue a single-use invitation for an approved member. |
+| `pnpm admin:accept-invite` | Activate an invited account with a password from stdin. |
+| `pnpm admin:set-status` | Suspend, disable, or reactivate an administrator account. |
+| `pnpm admin:cleanup` | Delete expired reset tokens and stale throttle rows. |
 
 ## Security Notes
 

@@ -11,9 +11,10 @@ Before implementation, read:
 3. `.docs/Tech-Stack.md` — selected technologies, versions, and compatibility rules.
 4. `.docs/Structure_File.md` — intended repository organization.
 5. `.docs/Roadmap.md` — current phase and exit criteria.
-6. `.docs/DATABASE_SCHEMA.md` — content tables, constraints, publication lifecycle, and seed/migration rules.
-7. `.docs/Desain.md` — visual direction for the public microsite.
-8. `.docs/LOCAL_DEVELOPMENT.md` — repeatable Windows local setup.
+6. `.docs/DATABASE_SCHEMA.md` — content and administrator tables, constraints, publication lifecycle, and seed/migration rules.
+7. `.docs/AUTH_SECURITY.md` — authentication model, authorization boundary, provisioning, recovery, throttling, threat model, and verification record.
+8. `.docs/Desain.md` — visual direction for the public microsite.
+9. `.docs/LOCAL_DEVELOPMENT.md` — repeatable Windows local setup.
 
 The latest explicit project-owner instruction takes precedence. The approved PRD and Architecture documents extend the earlier visual design brief to include a private CMS, authentication, PostgreSQL, and analytics. The visual principles in `.docs/Desain.md` remain authoritative for the public User Page.
 
@@ -50,10 +51,13 @@ The latest explicit project-owner instruction takes precedence. The approved PRD
 - Authentication is not equivalent to authorization. A valid Auth.js session alone does not grant CMS access.
 - Check the active Flexbox allowlist and `SUPER_ADMIN` role on the server for every protected read and mutation.
 - Do not rely only on client-side checks or route redirects.
-- Never expose password hashes, session tokens, OAuth secrets, `AUTH_SECRET`, or database credentials.
+- Never expose password hashes, session tokens, OAuth secrets, `NEXTAUTH_SECRET`, `AUTH_SECRET`, `RATE_LIMIT_SECRET`, invitation tokens, reset tokens, or database credentials.
 - The approved strategy is the Auth.js Credentials provider with JWT sessions. Auth.js does not persist Credentials users through an adapter and does not create database sessions for them. Account lookup, password verification, rate limiting, and provisioning are application responsibilities.
 - Hash passwords with Argon2id. Never store or log plaintext passwords.
 - Keep login, invitation, and recovery endpoints rate-limited.
+- `src/proxy.ts` is an early gate only. Every protected page, Server Action, route handler, and data service must call `requireAdmin`/`requireSuperAdmin`/`requireAdminAction` itself.
+- Lifecycle transitions must increment `authVersion` so existing sessions are invalidated. Never add a path that bypasses that revocation.
+- Administrator accounts are created only through the operator CLIs (`pnpm admin:bootstrap`, `pnpm admin:invite`, `pnpm admin:accept-invite`). Do not add a public registration path.
 
 ## 5. Database and Migration Rules
 

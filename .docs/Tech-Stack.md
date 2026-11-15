@@ -16,7 +16,7 @@
 | ORM | Prisma ORM 7.10.1 | Selected | Schema, queries, and migrations |
 | PostgreSQL driver | `pg` + `@prisma/adapter-pg` 7.10.1 | Required by Prisma 7 | Runtime database adapter |
 | Authentication | Auth.js / NextAuth 4.24.15 Credentials provider, JWT sessions | Selected | Internal sign-in and session integration |
-| Password hashing (auth phase) | Argon2id (`argon2`) | Selected | Password storage and verification |
+| Password hashing | Argon2id via `@node-rs/argon2` 2.2.2 | Selected | Password storage and verification |
 | Package manager | pnpm 12.18.0 | Selected | Dependency management and scripts |
 | Container | Docker 29.8.2 / Compose 5.5.1 locally | Selected | Local PostgreSQL |
 | VPS deployment | Coolify | Planned, not implemented | Future application deployment and service management |
@@ -63,6 +63,19 @@ Auth.js Credentials does not automatically persist users through the Prisma adap
 
 OAuth with a Prisma adapter and database sessions remains an option for a later phase if the team selects a managed identity provider. Do not implement a fake provider or request credentials during foundation work.
 
+**Implemented in Phase 4** with `next-auth@4.24.15`:
+
+- `src/lib/auth/config.ts` — `authOptions`: Credentials provider `admin-credentials`, JWT strategy, 8-hour fixed session, explicit cookie configuration, minimal `sub`/`role`/`av` claims, and a `session` callback that rebuilds the DTO from a fresh database read.
+- `src/app/api/auth/[...nextauth]/route.ts` — the Auth.js route handler.
+- `src/features/auth/` — schemas, repositories, services, Server Actions, and operator CLIs. Every module imports `server-only`.
+- `src/lib/auth/session.ts` and `src/features/auth/services/authorization.ts` — the authorization boundary used by pages and Server Actions.
+- `src/proxy.ts` — optimistic early gate only; it verifies the JWT and redirects, and is never the authorization check.
+- `src/lib/auth/cookies.ts` derives `__Secure-`/`__Host-` cookie names from `NEXTAUTH_URL` or `VERCEL`. NextAuth v4 reads `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, and `AUTH_SECRET`; `AUTH_URL` is only a fallback for building reset links.
+
+**Password hashing:** `@node-rs/argon2@2.2.2` with Argon2id, `m = 19456` KiB, `t = 2`, `p = 1`, 32-byte output. Chosen over the `argon2` package because it ships prebuilt N-API binaries, so `pnpm install` needs no node-gyp or Visual Studio build tools on Node 26 / Windows. The hash format is standard Argon2id (`$argon2id$...`), so switching implementations later does not require rehashing; sign-in rehashes only when the parameter set changes.
+
+**Authorization decision:** authentication is not authorization. A valid JWT grants nothing by itself; `resolveAuthorizedAdmin()` requires an `ACTIVE` `SUPER_ADMIN` row whose `auth_version` still matches the token's `av`. See `.docs/AUTH_SECURITY.md`.
+
 ### 2.6 Validation
 
 **Recommended:** Zod for server-side validation of admin forms, API inputs, settings, links, and environment variables. Client-side validation is for user experience; server-side validation is mandatory.
@@ -91,6 +104,13 @@ Phase 3 additions:
 - `vitest.config.mts` aliases `server-only` and `next/cache` to no-op stubs in `tests/stubs/` so real service modules can be imported in Node tests. Application builds still use the real modules.
 - `tests/setup.ts` loads `.env.local` for integration tests.
 - Integration tests run against the local container only and are strictly additive (unique `test-` slugs, cleaned up afterwards). They are skipped automatically when `DATABASE_URL` is not a loopback host.
+
+Phase 4 additions:
+
+- `next-auth@4.24.15` and `@node-rs/argon2@2.2.2` as runtime dependencies.
+- 15 test files / 156 tests (unit plus local-database integration) covering password hashing parameters, opaque-token hashing, callback-URL sanitisation, the login schema, the proxy gate, provisioning, authentication, authorization, and the lifecycle flows.
+- `tests/unit/proxy-gate.test.ts` mocks `next-auth/jwt` to prove the early gate fails closed without a database or a running server.
+- Manual HTTP verification against `next start` for the sign-in, sign-out, wrong-password, disabled-account, and foreign-`callbackUrl` paths; results are recorded in `.docs/AUTH_SECURITY.md`.
 
 Phase 2 added a **library-only** browser checks layer, not a full E2E framework:
 
@@ -127,8 +147,21 @@ Current committed template (`.env.example`):
 
 ```dotenv
 DATABASE_URL="postgresql://flexbox:dev-only-password@localhost:5433/flexbox_linktree_dev?schema=public"
-AUTH_SECRET="replace-with-a-unique-locally-generated-secret"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="replace-with-a-unique-locally-generated-secret"
+RATE_LIMIT_SECRET="replace-with-a-different-unique-locally-generated-secret"
+TRUST_PROXY_HEADERS="false"
+ADMIN_MAIL_TRANSPORT="file"
 ```
+
+Phase 4 variable rules:
+
+- `NEXTAUTH_URL` is the canonical origin. NextAuth v4 uses it for callback URLs, and `src/lib/auth/cookies.ts` derives the `__Secure-`/`__Host-` cookie prefix from an `https://` value.
+- `NEXTAUTH_SECRET` (or the `AUTH_SECRET` alias still read by the proxy and Auth.js config) signs the JWT. A missing value fails closed.
+- `RATE_LIMIT_SECRET` is a dedicated HMAC key for source throttle buckets and must differ from the session secret, so rotating one does not weaken the other.
+- `TRUST_PROXY_HEADERS="true"` only behind a proxy that overwrites `x-forwarded-for`; otherwise forwarded values are ignored.
+- `ADMIN_BOOTSTRAP_ENABLED`, `ADMIN_BOOTSTRAP_EMAIL`, and `ADMIN_BOOTSTRAP_NAME` are only read by `pnpm admin:bootstrap`, which refuses to run once any administrator exists.
+- `ADMIN_MAIL_TRANSPORT="file"` selects the development file transport under `.local-storage/mail/`. Production has no approved transport yet and the mailer refuses to run.
 
 `AUTH_URL` is not required for the current local setup. Auth.js v4 derives the URL from the request in development; add an explicit `AUTH_URL` only when the deployment topology requires it.
 

@@ -47,15 +47,30 @@ flexbox-linktree/
 │   │   ├── content-schemas.test.ts  # category/link/destination/settings validation
 │   │   ├── public-content.mapper.test.ts    # DTO mapping + destination resolution
 │   │   ├── public-content.service.test.ts   # composition, fallbacks, empty states
-│   │   └── seed-data.test.ts        # seed dataset contracts
+│   │   ├── seed-data.test.ts        # seed dataset contracts
+│   │   ├── password.test.ts         # Argon2id parameters, verification, rehash
+│   │   ├── security-tokens.test.ts  # opaque tokens + HMAC buckets
+│   │   ├── callback-url.test.ts     # post-login redirect allowlist
+│   │   ├── login-schema.test.ts     # credential form contract
+│   │   └── proxy-gate.test.ts       # fail-closed middleware gate
 │   └── integration/
-│       └── content-repository.test.ts  # publication filters against local PostgreSQL
+│       ├── content-repository.test.ts   # publication filters against local PostgreSQL
+│       ├── admin-provisioning.test.ts   # bootstrap, invitation, acceptance
+│       ├── admin-authentication.test.ts # Argon2id sign-in + throttling
+│       ├── admin-authorization.test.ts  # token-to-row authorization
+│       └── admin-lifecycle.test.ts      # status, password change, reset
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx           # fonts, metadata, viewport, lang
 │   │   ├── page.tsx             # public route; loads content from PostgreSQL
 │   │   ├── globals.css          # design tokens + public stylesheet
 │   │   ├── icon.png             # favicon from brand logo
+│   │   ├── api/auth/            # Auth.js route handler
+│   │   ├── admin/
+│   │   │   ├── login/           # public sign-in page + form
+│   │   │   ├── forgot-password/ # public recovery request
+│   │   │   ├── reset-password/  # public token completion
+│   │   │   └── (protected)/     # requireAdmin() gate, landing page, security page
 │   │   └── robots.ts            # /robots.txt
 │   ├── components/public/
 │   │   ├── site-header.tsx      # takes `site` props
@@ -74,14 +89,26 @@ flexbox-linktree/
 │   │   │   ├── schemas/         # Zod validation
 │   │   │   ├── services/        # cached public content composition
 │   │   │   └── types/           # public DTO contracts
+│   │   ├── auth/
+│   │   │   ├── actions/         # Server Actions (password change)
+│   │   │   ├── cli/             # bootstrap, invite, accept, status, cleanup
+│   │   │   ├── repositories/    # server-only admin queries
+│   │   │   ├── schemas/         # login + identity validation
+│   │   │   ├── services/        # authentication, authorization, lifecycle
+│   │   │   └── types/           # admin session DTOs
 │   │   └── public/
 │   │       └── copyright.ts     # stable copyright year
 │   ├── generated/prisma/        # generated Prisma Client (git-ignored)
 │   ├── lib/
+│   │   ├── auth/                # Auth.js options, session guards, cookies
+│   │   ├── mail/                # admin mail interface + development transport
 │   │   ├── prisma/client.ts
+│   │   ├── security/            # Argon2id, token hashing, client source
 │   │   ├── system-check.ts
 │   │   └── utils/url.ts
 │   └── types/
+│       └── next-auth.d.ts       # session/JWT augmentation
+├── src/proxy.ts                 # optimistic admin gate (not authorization)
 ├── AGENTS.md
 ├── README.md
 ├── docker-compose.yml
@@ -98,7 +125,7 @@ flexbox-linktree/
 └── .gitignore
 ```
 
-Phases 4 and later add `src/features/auth`, `src/components/admin`, `src/app/admin`, media storage adapters, and analytics modules. The public presentation components already consume typed DTO props, so later CMS work does not require rewriting them.
+Phase 4 added `src/features/auth`, `src/lib/auth`, `src/lib/security`, `src/lib/mail`, `src/app/admin`, `src/app/api/auth`, and `src/proxy.ts`. Phase 5 and later add `src/components/admin`, media storage adapters, and analytics modules. The public presentation components already consume typed DTO props, so later CMS work does not require rewriting them.
 
 ### 2.2 Target structure
 
@@ -258,17 +285,22 @@ Product, design, architecture, roadmap, stack, and local setup documentation. `D
 Original Flexbox brand assets and internal reference material. Copy approved web-ready assets into `public/assets/` when needed; preserve the original source asset.
 
 ### `prisma/`
-Prisma schema, committed database migrations, and development seed data. Never place production database dumps or secrets here.### `src/app/`
+Prisma schema, committed database migrations, and development seed data. Never place production database dumps or secrets here.
+
+### `src/app/`
 Next.js route definitions, layouts, loading/error boundaries, and narrow route handlers. Keep page components focused on composition and data loading.
 
 ### `src/components/`
 Reusable presentation components. Separate public and admin components because their visual systems and interaction requirements differ.
 
 ### `src/features/`
-Domain-oriented application logic. The `content` feature owns schemas, repositories, mappers, services, and types for the public content layer. Future features (`auth`, `media`, `analytics`) will be added alongside it.
+Domain-oriented application logic. The `content` feature owns schemas, repositories, mappers, services, and types for the public content layer. The `auth` feature owns administrator schemas, repositories, services, Server Actions, operator CLIs, and session DTOs. Future features (`media`, `analytics`) will be added alongside them.
 
 ### `src/lib/`
-Shared infrastructure adapters and cross-cutting concerns: Auth.js, Prisma singleton/client, storage, environment validation, authorization, security, and utilities.
+Shared infrastructure adapters and cross-cutting concerns: Auth.js configuration and session guards, the Prisma singleton/client, mail delivery, token and password security helpers, client-source derivation, storage, environment validation, and utilities.
+
+### `src/proxy.ts`
+The optimistic admin gate. It verifies the JWT signature and redirects unauthenticated visitors, but it never replaces the database-backed authorization checks in services and Server Actions.
 
 ### `tests/`
 Unit tests for pure logic, integration tests for database-backed services, and end-to-end tests for public/admin journeys.

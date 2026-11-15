@@ -1,12 +1,12 @@
-# Content Database Schema — Phase 3
+# Content Database Schema — Phases 3 and 4
 
 **Product:** Flexbox Linktree / Flexbox Studio Digital Hub
-**Status:** Implemented locally in Phase 3
+**Status:** Content tables implemented in Phase 3; administrator identity tables implemented in Phase 4
 **Language:** English
 
 ## Scope
 
-Phase 3 establishes the PostgreSQL content foundation. It does not implement admin authentication, CMS UI, uploads, analytics, or production deployment.
+Phase 3 establishes the PostgreSQL content foundation. Phase 4 adds the administrator identity, invitation, password-reset, throttling, and security-event tables described in section "Administrator tables". This document does not cover CMS UI, uploads, analytics, or production deployment.
 
 ## Tables
 
@@ -130,6 +130,89 @@ The seed dataset is in `prisma/seed-data.ts`; `prisma/seed.ts` upserts categorie
 
 The current seed preserves six unconfirmed destinations as `PUBLISHED` + `NONE` + `Segera`, preserves two `#kontak` internal destinations, and keeps the contact email, canonical URL, and Open Graph image null.
 
+## Administrator tables (Phase 4)
+
+Phase 4 adds the allowlist and its supporting tables. See `.docs/AUTH_SECURITY.md` for the authentication and authorization rules that use them.
+
+### `admin_users`
+
+The allowlist. There is no public registration: a row is created only by the bootstrap CLI or by accepting an invitation.
+
+| Column | Purpose |
+|---|---|
+| `id` | UUID primary key |
+| `email` | Address as entered |
+| `normalized_email` | Unique lower-cased lookup key |
+| `full_name` | Display name |
+| `password_hash` | Argon2id hash; `null` while `INVITED` |
+| `role` | `SUPER_ADMIN` |
+| `status` | `INVITED`, `ACTIVE`, `SUSPENDED`, `DISABLED` |
+| `email_verified_at`, `password_changed_at`, `last_login_at` | Lifecycle timestamps |
+| `failed_login_count`, `locked_until` | Advisory counters; the authoritative throttle is `admin_rate_limits` |
+| `auth_version` | Session generation included in the JWT as `av`; incremented on every lifecycle transition |
+
+### `admin_invitations`
+
+Single-use invitations. Only the SHA-256 hash of the raw token is stored.
+
+| Column | Purpose |
+|---|---|
+| `id` | UUID primary key |
+| `email`, `normalized_email` | Invited identity |
+| `token_hash` | Unique SHA-256 digest of the raw token |
+| `role` | Role granted on acceptance |
+| `expires_at` | 72-hour expiry |
+| `accepted_at`, `revoked_at` | Terminal states |
+| `created_by` | Issuing administrator (nullable on delete) |
+
+### `password_reset_tokens`
+
+Short-lived recovery tokens, also stored as SHA-256 digests only.
+
+| Column | Purpose |
+|---|---|
+| `id` | UUID primary key |
+| `admin_user_id` | Owning account |
+| `token_hash` | Unique digest |
+| `expires_at` | 60-minute expiry |
+| `used_at` | Set atomically on consumption |
+| `created_at` | Issue time |
+
+### `admin_rate_limits`
+
+Shared, restart-surviving login throttle.
+
+| Column | Purpose |
+|---|---|
+| `scope` | `ACCOUNT` or `SOURCE` |
+| `key_hash` | SHA-256 of the normalized email, or HMAC-SHA256 of the client address |
+| `attempt_count` | Failures inside the current window |
+| `window_started_at`, `locked_until` | Window and lock state |
+
+Unique on `(scope, key_hash)`. Raw email addresses and raw IP addresses are never stored.
+
+### `security_events`
+
+Append-only audit trail for authentication and lifecycle events. `admin_user_id` and `target_id` are nullable so events survive account deletion, and `safe_metadata` never contains passwords, hashes, tokens, or raw addresses.
+
+## Administrator enums
+
+- `admin_role`: `SUPER_ADMIN`
+- `admin_account_status`: `INVITED`, `ACTIVE`, `SUSPENDED`, `DISABLED`
+- `rate_limit_scope`: `ACCOUNT`, `SOURCE`
+- `security_event_type`: `LOGIN_SUCCEEDED`, `LOGIN_FAILED`, `LOGIN_BLOCKED`, `INVITATION_CREATED`, `INVITATION_REVOKED`, `INVITATION_ACCEPTED`, `ACCOUNT_BOOTSTRAPPED`, `ACCOUNT_ACTIVATED`, `ACCOUNT_SUSPENDED`, `ACCOUNT_DISABLED`, `PASSWORD_CHANGED`, `PASSWORD_RESET_REQUESTED`, `PASSWORD_RESET_COMPLETED`, `SESSION_REVOKED`, `RATE_LIMIT_CLEANUP`
+
+## Administrator constraints
+
+Additive migrations from Phase 4 add PostgreSQL checks for:
+
+- `admin_users`: `normalized_email` equals its own lower-cased, trimmed form and is non-empty; `password_hash` is `NULL` or starts with `$argon2id$`; `ACTIVE` requires a password hash; `role` must be `SUPER_ADMIN`; `auth_version >= 1`; `failed_login_count >= 0`.
+- `admin_invitations` and `password_reset_tokens`: lower-cased `normalized_email`, 64-character lowercase hex `token_hash`, `SUPER_ADMIN` role, and coherent lifecycle timestamps (`expires_at` after `created_at`, `accepted_at`/`revoked_at`/`used_at` not before creation).
+- `admin_rate_limits`: 64-character lowercase hex `key_hash`, non-negative `attempt_count`, and `locked_until` not before `window_started_at` when both are set.
+- Uniqueness: one `admin_users.normalized_email`, one invitation and one reset token per `token_hash`, and one throttle row per `(scope, key_hash)`.
+
+Lifecycle timestamps are supplied by the application clock while `created_at` uses the database clock. The migration `20261115161000_relax_lifecycle_clock_skew` widens the token lifecycle checks by five minutes so a small clock difference between the app host and PostgreSQL cannot reject a valid transition.
+
 ## Migration and local connection
 
 Local PostgreSQL runs in the loopback-only `flexbox-linktree-db` container (`127.0.0.1:5433`, database `flexbox_linktree_dev`). Prisma CLI loads `.env.local` through `prisma7.config.ts`.
@@ -153,6 +236,8 @@ The public service uses Next.js 16 Cache Components with `use cache`, `cacheLife
 
 Phase 3 creates no analytics event table. Future analytics must preserve historical references using nullable relationships or snapshots rather than cascading deletion from content. Raw analytics retention is a later decision with the initial documented target of 90 days. Media binaries will use the storage abstraction and independent production storage; they are not database blobs.
 
+Administrator rows are never hard-deleted by application code. Status transitions (`SUSPENDED`, `DISABLED`) preserve the audit trail, and `security_events` keeps nullable references so history survives a manual removal. `pnpm admin:cleanup` removes only expired reset tokens and stale throttle rows; invitations and security events are retained as audit data.
+
 ## Future boundaries
 
-Phase 4 owns authentication and authorization. Phase 5 owns CMS CRUD, publication mutations, media upload, and audit workflows. Phase 6 owns analytics. Admin identity and audit-log tables are intentionally not added speculatively in Phase 3.
+Phase 4 owns authentication, authorization, provisioning, recovery, throttling, and security events; it is complete. Phase 5 owns CMS CRUD, publication mutations, media upload, and the audit-log UI. Phase 6 owns analytics.

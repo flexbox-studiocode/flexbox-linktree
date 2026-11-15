@@ -116,19 +116,28 @@ Phase 3 status: **complete.** The public page loads published, active content fr
 
 **Goal:** Restrict the CMS to approved Flexbox members.
 
-Recorded strategy: Auth.js / NextAuth v4 Credentials provider with JWT sessions. Provisioning is internal; Argon2id password hashing; server-side authorization on every protected read and mutation.
+Recorded strategy: Auth.js / NextAuth v4 Credentials provider with JWT sessions. Provisioning is internal; Argon2id password hashing; server-side authorization on every protected read and mutation. Full implementation notes, threat model, and verification evidence are in `.docs/AUTH_SECURITY.md`.
 
 Tasks:
-- [x] Choose Auth.js provider and session strategy (Credential + JWT, NextAuth v4).
-- [ ] Implement invitation/allowlist provisioning.
-- [ ] Implement Super Admin account status and role checks.
-- [ ] Protect admin layouts, route handlers, server actions, and data services.
-- [ ] Implement logout and approved account recovery flow.
-- [ ] Add login rate limiting and secure cookie configuration.
+- [x] Choose Auth.js provider and session strategy (Credentials + JWT, NextAuth v4).
+- [x] Implement invitation/allowlist provisioning.
+  - CLI-only in this phase: `pnpm admin:bootstrap`, `pnpm admin:invite`, `pnpm admin:accept-invite`, `pnpm admin:set-status`, `pnpm admin:cleanup`. Screens belong to Phase 5.
+- [x] Implement Super Admin account status and role checks.
+  - `resolveAuthorizedAdmin()` requires an `ACTIVE` `SUPER_ADMIN` row whose `auth_version` matches the JWT's `av`.
+- [x] Protect admin layouts, route handlers, server actions, and data services.
+  - `requireAdmin`, `requireSuperAdmin`, and `requireAdminAction` in `src/lib/auth/session.ts`; `src/proxy.ts` is an optimistic gate only.
+- [x] Implement logout and approved account recovery flow.
+  - Sign-out, signed-in password change, and single-use 60-minute reset tokens delivered through the development file mail transport.
+- [x] Add login rate limiting and secure cookie configuration.
+  - Database-backed `ACCOUNT` and `SOURCE` buckets; `httpOnly`, `sameSite=lax`, host-prefixed cookies, `secure` derived from the canonical URL.
 - [ ] Add MFA if supported by the selected provider/workflow.
-- [ ] Test unauthorized, inactive, expired-session, and valid-admin scenarios.
+  - Deferred: the Credentials provider in NextAuth v4 has no built-in second factor and no authenticator workflow was approved for this phase. Recorded as a known limitation with compensating controls.
+- [x] Test unauthorized, inactive, expired-session, and valid-admin scenarios.
+  - Integration tests plus manual HTTP verification against `next start`; results recorded in `.docs/AUTH_SECURITY.md`.
 
 **Exit criteria:** no unapproved account can read or mutate CMS data, even when calling endpoints directly.
+
+Phase 4 status: **complete.** 15 test files / 156 tests pass, lint and typecheck are clean, the production build succeeds, and the sign-in, sign-out, throttling, disabled-account, and foreign-redirect paths were verified against a running server. No CMS screen, no multi-factor authentication, no production mail provider, and no deployment were implemented.
 
 ## Phase 5 — Full CMS
 
@@ -224,7 +233,7 @@ Potential follow-up work, only after observing real usage:
 | Phase 1 — Local Environment and Project Foundation | Complete |
 | Phase 2 — Public User Page | Complete |
 | Phase 3 — Content Database and CMS Foundation | Complete |
-| Phase 4 — Authentication and Authorization | Not started |
+| Phase 4 — Authentication and Authorization | Complete |
 | Phase 5 — Full CMS | Not started |
 | Phase 6 — Advanced Analytics | Not started |
 | Phase 7 — Quality, Security, and Release Readiness | Not started |

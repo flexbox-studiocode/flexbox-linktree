@@ -53,10 +53,19 @@ function buildLoginRedirect(request: NextRequest): NextResponse {
 
 export async function proxy(request: NextRequest): Promise<Response> {
   const secret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
+  const isPublicAdminPage = PUBLIC_ADMIN_PATHS.has(request.nextUrl.pathname);
+  const isAuthApi = request.nextUrl.pathname.startsWith("/api/auth/");
 
   // No secret configured: nothing can be verified, so the admin area must not
-  // render. Refuse closed rather than serving unauthenticated content.
+  // render. Refuse closed rather than serving unauthenticated content. The
+  // sign-in and Auth.js routes stay reachable — sending them to `/admin/login`
+  // would create a redirect loop, and Auth.js reports its own configuration
+  // error there instead.
   if (!secret) {
+    if (isPublicAdminPage || isAuthApi) {
+      return NextResponse.next();
+    }
+
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
@@ -66,9 +75,6 @@ export async function proxy(request: NextRequest): Promise<Response> {
     cookieName: sessionCookieName(),
     secureCookie: sessionCookieName().startsWith("__Secure"),
   });
-
-  const isPublicAdminPage = PUBLIC_ADMIN_PATHS.has(request.nextUrl.pathname);
-  const isAuthApi = request.nextUrl.pathname.startsWith("/api/auth/");
 
   const authenticated =
     token !== null &&

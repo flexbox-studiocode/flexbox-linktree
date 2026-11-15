@@ -85,7 +85,10 @@ Use Server Components by default. Add Client Components only for interactive con
 |---|---|---|
 | `/` | Public digital hub | Public |
 | `/admin/login` | Admin sign-in | Public route, authentication only |
-| `/admin` | Admin dashboard | Super Admin |
+| `/admin/forgot-password` | Request a recovery link | Public route, authentication only |
+| `/admin/reset-password` | Complete recovery with a single-use token | Public route, authentication only |
+| `/admin` | Admin landing page (Phase 5 builds the dashboard) | Super Admin |
+| `/admin/security` | Signed-in password change and session revocation | Super Admin |
 | `/admin/links` | Link management | Super Admin |
 | `/admin/links/new` | Create link | Super Admin |
 | `/admin/links/[id]` | Edit link | Super Admin |
@@ -152,6 +155,32 @@ Consequences that must be implemented in the authentication phase:
 
 Rejected alternative: OAuth provider with the Prisma adapter and database sessions. It is a reasonable design for larger organizations, but it adds an external identity-provider dependency that is not available for this release. The architecture stays compatible with that option because authorization is enforced by the application allowlist, not by the Auth.js adapter.
 
+**Implemented in Phase 4** (details and threat model in `.docs/AUTH_SECURITY.md`):
+
+| Module | Responsibility |
+|---|---|
+| `src/lib/auth/config.ts` | `authOptions`: Credentials provider `admin-credentials`, JWT strategy, 8-hour fixed session, explicit cookie settings, minimal `sub`/`role`/`av` claims, database-backed `session` callback |
+| `src/features/auth/services/authenticate-admin.ts` | Shape validation, throttle pre-check, lookup, Argon2id verification, rehash-on-login, security events |
+| `src/features/auth/services/authorization.ts` | `resolveAuthorizedAdmin`: requires an `ACTIVE` `SUPER_ADMIN` row whose `authVersion` matches the token |
+| `src/lib/auth/session.ts` | `getCurrentAdmin`, `requireAdmin`, `requireSuperAdmin`, `requireAdminAction` for pages and Server Actions |
+| `src/features/auth/services/provisioning.ts` | Bootstrap, invitation, and invitation acceptance; no public registration |
+| `src/features/auth/services/account-lifecycle.ts` | Suspend, disable, reactivate, password change; every transition increments `authVersion` |
+| `src/features/auth/services/password-reset.ts` | Non-enumerating recovery with 60-minute single-use tokens |
+| `src/features/auth/services/rate-limit.ts` | Database-backed `ACCOUNT` and `SOURCE` throttle buckets |
+| `src/lib/security/password.ts` | Argon2id parameters and rehash decision |
+| `src/lib/security/tokens.ts`, `client-source.ts` | SHA-256/HMAC bucket derivation, forwarded-header trust |
+| `src/lib/auth/callback-url.ts`, `cookies.ts` | Post-login redirect sanitiser, cookie-name derivation |
+| `src/proxy.ts` | Optimistic early gate with a `PUBLIC_ADMIN_PATHS` allowlist; never the authorization check |
+| `src/lib/mail/admin-mailer.ts` | Mail interface with a development file transport that refuses production |
+
+Key recorded decisions:
+
+- **Argon2id via `@node-rs/argon2`** instead of the `argon2` package: prebuilt N-API binaries avoid a node-gyp toolchain on Node 26 / Windows, with a standard `$argon2id$` hash format.
+- **`authVersion` instead of a session table**: JWT sessions cannot be deleted, so a monotonic counter in the account row provides immediate revocation on suspension, disablement, password change, or reset.
+- **Post-login redirect allowlist**: only `/admin` paths survive `sanitizeCallbackUrl`; Auth.js additionally resolves relative targets against its own base URL.
+- **Database-backed throttling**: an in-memory counter would die with the process and would not be shared across instances.
+- **Recovery reuses the `SOURCE` throttle bucket** deliberately: sign-in, recovery, and invitation acceptance are the same authentication surface.
+
 ### 6.3 Media
 
 Use a storage interface so local storage and production object storage can be swapped without changing CMS business logic. Store metadata and storage keys in PostgreSQL; store binary files in persistent/object storage, not as database blobs by default.
@@ -210,13 +239,13 @@ Initial raw-event retention target: 90 days, subject to privacy review. Aggregat
 
 The schema should be designed around these domains:
 
-| Domain | Suggested entities |
+| Domain | Entities |
 |---|---|
-| Identity | Auth.js User/Account/Session tables if adapter strategy is selected; AdminMembership or admin profile; AdminInvitation |
+| Identity | `admin_users` (allowlist, role, status, `auth_version`), `admin_invitations`, `password_reset_tokens`, `admin_rate_limits`, `security_events` |
 | Content | Link, Category, SiteSetting |
 | Media | MediaAsset |
 | Analytics | AnalyticsEvent, AnalyticsDailyAggregate, optional AnalyticsSession |
-| Operations | AuditLog |
+| Operations | Audit and security events (`security_events` in Phase 4; broader audit log in Phase 5) |
 
 Use UUID identifiers, unique slugs, foreign keys, explicit status fields, timestamps, and indexes. Define deletion behavior deliberately. Avoid cascading deletion of historical analytics when a link is deleted; preserve a snapshot or nullable reference as appropriate.
 
@@ -226,15 +255,17 @@ Use UUID identifiers, unique slugs, foreign keys, explicit status fields, timest
 - Only allowlisted, active Flexbox members with `SUPER_ADMIN` role can access the CMS.
 - Verify authorization on every server-side mutation and protected data query.
 - Use secure session cookies and HTTPS in production.
-- Keep OAuth credentials, `AUTH_SECRET`, and database credentials out of Git.
-- Hash passwords with a modern password-hashing algorithm if Credentials login is selected.
-- Rate-limit login, invitation, password-reset, and analytics endpoints.
+- Keep OAuth credentials, `AUTH_SECRET`, `NEXTAUTH_SECRET`, `RATE_LIMIT_SECRET`, and database credentials out of Git.
+- Hash passwords with Argon2id (`m = 19456`, `t = 2`, `p = 1`) and rehash on sign-in when parameters change.
+- Rate-limit login, invitation, and password-reset endpoints with shared database-backed buckets.
 - Validate inputs using Zod (or an approved equivalent) on the server.
-- Restrict URL protocols and redirect destinations.
+- Restrict URL protocols and redirect destinations; post-login targets are limited to `/admin` paths.
 - Validate uploaded files by size and actual MIME/content type.
 - Keep database networking private.
 - Use least-privilege database users and separate credentials per environment.
-- Record relevant admin actions without logging secrets.
+- Record relevant admin actions without logging secrets. `security_events.safe_metadata` never contains passwords, hashes, tokens, or raw addresses.
+
+The recorded Phase 4 decisions, threat model, and verification evidence are in `.docs/AUTH_SECURITY.md`.
 
 ## 11. Environment and Configuration
 
@@ -248,17 +279,19 @@ Never share a database URL, Auth.js secret, OAuth secret, or storage credential 
 
 Prisma CLI does not inherit Next.js environment loading. `prisma7.config.ts` loads `.env.local` explicitly so `prisma validate`, `prisma generate`, `prisma migrate`, and `prisma studio` operate on the same local database as the application. Keep that behavior; do not introduce a second credential source for the CLI.
 
-## 11.1 Current Implementation Status (Phase 3)
+## 11.1 Current Implementation Status (Phase 4)
 
 The repository currently contains:
 
 - Next.js App Router application, TypeScript strict mode, Tailwind CSS v4 tokens, and the public microsite (Phase 2, preserved).
 - Prisma 7 with the `pg` driver adapter and the `SystemCheck` health-check model plus the content domain: `categories`, `links`, `site_settings`, and `media_assets`, with enums, foreign keys, CHECK constraints, and indexes (Phase 3).
 - A typed content layer in `src/features/content`: Zod schemas, repositories, mappers, and services. The public route reads published, active content from PostgreSQL through `getPublicContent()`.
+- Administrator identity tables (`admin_users`, `admin_invitations`, `password_reset_tokens`, `admin_rate_limits`, `security_events`) and the authentication/authorization modules described in section 6.2 (Phase 4).
+- `/admin/login`, `/admin` (authenticated placeholder), `/admin/security`, `/admin/forgot-password`, and `/admin/reset-password`, plus the Auth.js route at `/api/auth/[...nextauth]`.
 - Development seed data in `prisma/seed-data.ts`, upserted by `pnpm db:seed`.
 - Lint, typecheck, unit/integration test, production build, visual QA, and accessibility QA scripts.
 
-Nothing in this section implies that the admin CMS, authentication, media upload, analytics, or deployment exists yet. Those are later phases. `.docs/DATABASE_SCHEMA.md` documents the content schema in detail.
+Nothing in this section implies that CMS content screens, media upload, analytics, or deployment exist yet. Those are later phases. `.docs/DATABASE_SCHEMA.md` documents the schema, and `.docs/AUTH_SECURITY.md` documents the security model.
 
 ## 12. Database Migration and Release
 
@@ -296,7 +329,8 @@ Persistent Docker volumes protect against container replacement, not VPS loss. A
 | `.docs/Tech-Stack.md` | Selected technologies, versions, and version policy |
 | `.docs/Structure_File.md` | Repository layout and import conventions |
 | `.docs/Roadmap.md` | Phases and measurable exit criteria |
-| `.docs/DATABASE_SCHEMA.md` | Content tables, constraints, publication lifecycle, seed, and migration rules |
+| `.docs/DATABASE_SCHEMA.md` | Content and administrator tables, constraints, lifecycle, seed, and migration rules |
+| `.docs/AUTH_SECURITY.md` | Authentication model, authorization boundary, provisioning, recovery, threat model, and verification |
 | `.docs/Desain.md` | Public visual system (original form preserved) |
 | `.docs/LOCAL_DEVELOPMENT.md` | Repeatable local Windows setup |
 | `.docs/PUBLIC_PAGE.md` | Public page sections, content model, destination policy, and QA commands |

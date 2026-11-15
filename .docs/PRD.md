@@ -147,6 +147,8 @@ Behavior:
 
 **Authentication implementation decision:** Auth.js / NextAuth will use the Credentials provider with JWT sessions. This is the practical option for a small, explicitly provisioned internal Flexbox team because no external OAuth provider or credentials are available for this release. The application will own allowlist provisioning, password verification with Argon2id, login rate limiting, and the `SUPER_ADMIN` active-status authorization check. Credentials users are not automatically persisted by the Prisma adapter, and Credentials sessions are not database sessions. An OAuth provider plus Prisma adapter/database sessions remains a future option if Flexbox adopts a managed identity provider.
 
+**Phase 4 implementation status:** the authentication and access-control requirements in this section are implemented and verified, including the no-enumeration rule, server-side authorization, database-backed rate limiting, JWT sessions with immediate revocation, and internal-only provisioning. MFA is deferred and recorded as a known limitation. See `.docs/AUTH_SECURITY.md`. Admin account management screens and audit-log UI in sections 6.7 and 6.8 remain Phase 5 work; provisioning is currently CLI-only.
+
 ### 6.2 Dashboard
 
 Show useful operational summaries:

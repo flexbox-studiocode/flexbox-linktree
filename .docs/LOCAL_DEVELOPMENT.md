@@ -107,23 +107,39 @@ Create it from the committed template:
 Copy-Item .env.example .env.local
 ```
 
-Required variables:
+Required variables for the application and authentication flow:
 
 | Variable | Purpose |
 |---|---|
 | `DATABASE_URL` | PostgreSQL connection string for local development |
-| `AUTH_SECRET` | Session-signing secret; locally generated, unique per environment |
+| `NEXTAUTH_URL` | Canonical local origin used by Auth.js and reset links |
+| `NEXTAUTH_SECRET` | JWT/session-signing secret; locally generated, unique per environment |
+| `RATE_LIMIT_SECRET` | Dedicated HMAC key for source throttle buckets; different from the session secret |
+
+Optional development controls:
+
+| Variable | Purpose |
+|---|---|
+| `TRUST_PROXY_HEADERS` | Keep `false` locally; enable only behind a trusted proxy |
+| `ADMIN_MAIL_TRANSPORT` | Set `file` to write recovery mail under `.local-storage/mail/` |
+| `ADMIN_BOOTSTRAP_ENABLED` | Temporarily set `true` for the one-time first-admin CLI |
+| `ADMIN_BOOTSTRAP_EMAIL`, `ADMIN_BOOTSTRAP_NAME` | Identity values consumed by the bootstrap CLI |
 
 Local `DATABASE_URL` value:
 
 ```dotenv
 DATABASE_URL="postgresql://flexbox:dev-only-password@localhost:5433/flexbox_linktree_dev?schema=public"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="replace-with-a-unique-locally-generated-session-secret"
+RATE_LIMIT_SECRET="replace-with-a-different-unique-locally-generated-rate-limit-secret"
+TRUST_PROXY_HEADERS="false"
+ADMIN_MAIL_TRANSPORT="file"
 ```
 
-Generate a local `AUTH_SECRET` without printing it into a shared log:
+Generate local secrets without printing them into a shared log:
 
 ```powershell
-node -e "const fs=require('fs');const c=require('crypto');const v=c.randomBytes(32).toString('base64url');const p='.env.local';let t=fs.existsSync(p)?fs.readFileSync(p,'utf8'):'';t=t.replace(/^AUTH_SECRET=.*$/m,'')+ '\nAUTH_SECRET=\"'+v+'\"\n';fs.writeFileSync(p,t);console.log('AUTH_SECRET written to .env.local');"
+node -e "const fs=require('fs');const c=require('crypto');const p='.env.local';let t=fs.existsSync(p)?fs.readFileSync(p,'utf8'):'';t=t.replace(/^NEXTAUTH_SECRET=.*$/m,'').replace(/^RATE_LIMIT_SECRET=.*$/m,'')+'\nNEXTAUTH_SECRET=\"'+c.randomBytes(32).toString('base64url')+'\"\nRATE_LIMIT_SECRET=\"'+c.randomBytes(32).toString('base64url')+'\"\n';fs.writeFileSync(p,t);console.log('Authentication secrets written to .env.local');"
 ```
 
 Never paste the real secret into chat, documentation, screenshots, issues, or commits.
@@ -199,7 +215,37 @@ pnpm build        # Production build
 
 Run all four before committing an application change. Report exactly which ran and their results.
 
-## 9. Safe Database Reset
+## 9. Administrator Accounts (Phase 4)
+
+There is no public registration. Accounts exist only through the operator CLIs. They load `.env.local` themselves through `tsx --env-file`, so they work without starting the app.
+
+```powershell
+# First Super Admin (one time). Requires ADMIN_BOOTSTRAP_ENABLED="true",
+# plus ADMIN_BOOTSTRAP_EMAIL and ADMIN_BOOTSTRAP_NAME in .env.local.
+pnpm admin:bootstrap
+
+# Additional member: issue a single-use invitation (72 hours).
+pnpm admin:invite --email="member@example.test" --name="Flexbox Member"
+# The token is printed exactly once. Deliver it privately, then:
+$env:INVITATION_TOKEN = "the-token"
+$env:INVITATION_PASSWORD = "a-strong-passphrase"
+pnpm admin:accept-invite
+Remove-Item Env:INVITATION_TOKEN, Env:INVITATION_PASSWORD
+
+# Lifecycle
+pnpm admin:set-status --email="member@example.test" --status=SUSPENDED   # or DISABLED / ACTIVE
+
+# Housekeeping (expired reset tokens and stale throttle rows only)
+pnpm admin:cleanup
+```
+
+Then sign in at <http://localhost:3000/admin/login>. Every CLI prints only account ids and addresses, never tokens or passwords beyond the single invitation token it is specifically designed to hand over.
+
+Password recovery writes a JSON message with the reset link to `.local-storage/mail/` when `ADMIN_MAIL_TRANSPORT="file"` (the default outside production). Deleting that folder only removes local development mail. Never rely on this transport in staging or production.
+
+Full security behaviour, threat model, and limits are recorded in `.docs/AUTH_SECURITY.md`.
+
+## 10. Safe Database Reset
 
 Prefer migrations over destructive reset. If the local database is genuinely disposable and you want a clean rebuild:
 
@@ -216,7 +262,7 @@ pnpm db:migrate:deploy
 
 `prisma migrate reset` and `docker volume rm` are destructive. Never run either against staging or production. Never run `docker compose down -v` on a machine whose local data you still need.
 
-## 10. Daily Workflow
+## 11. Daily Workflow
 
 ```powershell
 # 1. Ensure the database is up
@@ -233,7 +279,7 @@ pnpm test
 pnpm build
 ```
 
-## 11. Troubleshooting
+## 12. Troubleshooting
 
 ### `dockerDesktopLinuxEngine` connection error
 Start Docker Desktop and wait for the Linux engine. Retry `docker compose up -d postgres`.
@@ -265,7 +311,7 @@ Tailwind v4 is integrated through `@tailwindcss/turbopack` in `next.config.ts` a
 ### `pnpm` not recognized
 Reopen the terminal or VS Code so the npm global bin directory is reloaded into `PATH`.
 
-## 12. Known Local Characteristics
+## 13. Known Local Characteristics
 
 - The application runs on the Windows host; only PostgreSQL runs in Docker.
 - The repository path used by the owner is `D:\Kiandra Gagah\Projek Gabut\flexbox-linktree`.
