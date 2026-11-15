@@ -1,5 +1,6 @@
 import { copyrightYear } from "@/features/public/copyright";
 import { getPublicContent } from "@/features/content/services/content";
+import PageViewBeacon from "@/components/public/page-view-beacon";
 
 import ContactCta from "@/components/public/contact-cta";
 import Directory from "@/components/public/directory";
@@ -26,6 +27,7 @@ export default async function PublicPage() {
       </a>
 
       <SiteHeader site={site} />
+      <PageViewBeacon />
 
       <main id="konten">
         <Hero site={site} />
