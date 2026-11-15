@@ -30,6 +30,25 @@ const ALLOWED_METADATA_KEYS = new Set([
   "removedResetTokens",
   "expiresAt",
   "targetType",
+  // Phase 5 CMS audit metadata. All values are non-secret bookkeeping strings or
+  // counts: slugs, ids, setting keys, MIME types, byte sizes, and changed-field
+  // lists. Passwords, hashes, tokens, and cookies are never placed here.
+  "linkId",
+  "linkSlug",
+  "previousSlug",
+  "categoryId",
+  "categorySlug",
+  "previousCategoryId",
+  "settingKey",
+  "mediaId",
+  "storageKey",
+  "mimeType",
+  "sizeBytes",
+  "changedFields",
+  "linkCount",
+  "position",
+  "reassignedCount",
+  "deliveryStatus",
 ]);
 
 const MAX_METADATA_VALUE_LENGTH = 200;

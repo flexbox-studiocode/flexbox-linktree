@@ -1,16 +1,18 @@
 import "server-only";
 
 import {
+  ADMIN_IDENTITY_SELECT,
   findAdminById,
   findAdminWithPasswordHash,
   findAdminWithPasswordHashById,
   replaceAdminPassword,
   revokeAdminSessions,
-  setAdminStatus,
 } from "@/features/auth/repositories/admin-user";
 import { invalidateResetTokensForAdmin } from "@/features/auth/repositories/password-reset-token";
 import { recordSecurityEvent } from "@/features/auth/services/security-event";
+import { prisma } from "@/lib/prisma/client";
 import { checkPasswordPolicy, hashPassword, verifyPassword } from "@/lib/security/password";
+import type { Prisma } from "@/generated/prisma/client";
 import type { AdminAccountStatus } from "@/generated/prisma/enums";
 
 /**
@@ -140,11 +142,22 @@ export type StatusTransitionResult = {
   authVersion: number;
 };
 
+/**
+ * Optional guard executed inside the same transaction as the status write.
+ *
+ * Phase 5 uses it to prevent the last active Super Admin from being suspended or
+ * disabled. Running the check and the update in one transaction (with a row
+ * lock on the account) makes the decision atomic, so two concurrent requests
+ * cannot both observe "two active owners" and then both demote one.
+ */
+export type StatusGuard<Tx> = (tx: Tx) => Promise<void>;
+
 async function applyStatusChange(params: {
   adminUserId: string;
   nextStatus: AdminAccountStatus;
   actorAdminId?: string | null;
   eventType: "ACCOUNT_SUSPENDED" | "ACCOUNT_DISABLED" | "ACCOUNT_ACTIVATED";
+  guard?: StatusGuard<Prisma.TransactionClient>;
 }): Promise<StatusTransitionResult> {
   const existing = await findAdminById(params.adminUserId);
 
@@ -172,12 +185,10 @@ async function applyStatusChange(params: {
     }
   }
 
-  const updated = await setAdminStatus({
+  const updated = await applyStatusWrite({
     adminUserId: existing.id,
-    status: params.nextStatus,
-    // Reactivating must not resurrect old sessions either, so the generation
-    // always moves.
-    revokeSessions: true,
+    nextStatus: params.nextStatus,
+    guard: params.guard,
   });
 
   await recordSecurityEvent({
@@ -200,9 +211,40 @@ async function applyStatusChange(params: {
   };
 }
 
+/**
+ * Applies the status and the `authVersion` increment inside one transaction.
+ * The row is locked first so a concurrent request cannot change the same
+ * account between the caller's guard and the write.
+ */
+async function applyStatusWrite(params: {
+  adminUserId: string;
+  nextStatus: AdminAccountStatus;
+  guard?: StatusGuard<Prisma.TransactionClient>;
+}) {
+  return prisma.$transaction(async (tx) => {
+    // `SELECT ... FOR UPDATE` serialises concurrent transitions on this row.
+    await tx.$queryRaw`SELECT id FROM admin_users WHERE id = ${params.adminUserId}::uuid FOR UPDATE`;
+
+    if (params.guard) {
+      await params.guard(tx);
+    }
+
+    return tx.adminUser.update({
+      where: { id: params.adminUserId },
+      data: {
+        status: params.nextStatus,
+        authVersion: { increment: 1 },
+        ...(params.nextStatus === "ACTIVE" ? { failedLoginCount: 0, lockedUntil: null } : {}),
+      },
+      select: ADMIN_IDENTITY_SELECT,
+    });
+  });
+}
+
 export async function suspendAdmin(params: {
   adminUserId: string;
   actorAdminId?: string | null;
+  guard?: StatusGuard<Prisma.TransactionClient>;
 }): Promise<StatusTransitionResult> {
   return applyStatusChange({ ...params, nextStatus: "SUSPENDED", eventType: "ACCOUNT_SUSPENDED" });
 }
@@ -210,6 +252,7 @@ export async function suspendAdmin(params: {
 export async function disableAdmin(params: {
   adminUserId: string;
   actorAdminId?: string | null;
+  guard?: StatusGuard<Prisma.TransactionClient>;
 }): Promise<StatusTransitionResult> {
   return applyStatusChange({ ...params, nextStatus: "DISABLED", eventType: "ACCOUNT_DISABLED" });
 }
@@ -217,6 +260,7 @@ export async function disableAdmin(params: {
 export async function reactivateAdmin(params: {
   adminUserId: string;
   actorAdminId?: string | null;
+  guard?: StatusGuard<Prisma.TransactionClient>;
 }): Promise<StatusTransitionResult> {
   return applyStatusChange({ ...params, nextStatus: "ACTIVE", eventType: "ACCOUNT_ACTIVATED" });
 }

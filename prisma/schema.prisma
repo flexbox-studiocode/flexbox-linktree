@@ -309,6 +309,26 @@ enum SecurityEventType {
   PASSWORD_RESET_COMPLETED
   SESSION_REVOKED
   RATE_LIMIT_CLEANUP
+  // Phase 5 CMS audit events. Content events share this append-only trail so an
+  // operator can review authentication and content history in one place.
+  LINK_CREATED
+  LINK_UPDATED
+  LINK_PUBLISHED
+  LINK_UNPUBLISHED
+  LINK_ARCHIVED
+  LINK_RESTORED
+  LINK_DELETED
+  LINK_REORDERED
+  CATEGORY_CREATED
+  CATEGORY_UPDATED
+  CATEGORY_ACTIVATED
+  CATEGORY_DEACTIVATED
+  CATEGORY_REORDERED
+  CATEGORY_DELETED
+  SETTINGS_UPDATED
+  MEDIA_UPLOADED
+  MEDIA_UPDATED
+  MEDIA_DELETED
 
   @@map("security_event_type")
 }

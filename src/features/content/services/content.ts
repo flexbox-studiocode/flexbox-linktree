@@ -12,6 +12,7 @@ import {
   type PublicCategoryRecord,
 } from "@/features/content/mappers/public-content";
 import { parseSiteSetting } from "@/features/content/schemas/site-setting";
+import { publicContentCacheTag } from "@/features/content/services/cache-tag";
 import type {
   SiteSettingKey,
   SiteSettingValue,
@@ -32,7 +33,7 @@ import type {
  * revalidation endpoint is exposed in this phase.
  */
 const CACHE_PROFILE = "minutes" as const;
-const CACHE_TAG = "public-content";
+const CACHE_TAG = publicContentCacheTag;
 
 type CachedResult<T> = { ok: true; data: T } | { ok: false };
 

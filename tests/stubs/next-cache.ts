@@ -17,3 +17,11 @@ export function cacheTag(): void {
 export function revalidateTag(): void {
   // No-op outside the Next.js cache scope.
 }
+
+export function updateTag(): void {
+  // No-op outside a Server Action scope.
+}
+
+export function revalidatePath(): void {
+  // No-op outside the Next.js request scope.
+}
