@@ -349,3 +349,161 @@ model SecurityEvent {
   @@index([eventType, createdAt])
   @@map("security_events")
 }
+
+// ---------------------------------------------------------------------------
+// Phase 6 — Privacy-conscious analytics
+//
+// Collection is limited to two events (`PAGE_VIEW`, `LINK_CLICK`) and to a
+// closed set of dimensions. There is no free-form property bag, no raw IP, and
+// no raw User-Agent column: the request headers are normalized in memory and
+// only the categories below reach PostgreSQL.
+//
+// Identifiers are keyed digests of first-party random cookies. The `link_id`
+// columns are deliberately plain UUIDs without a foreign key so historical
+// analytics survive a permanent link deletion; the snapshot columns preserve
+// the identity a report needs. See `.docs/ANALYTICS_SPECIFICATION.md`.
+// ---------------------------------------------------------------------------
+
+/// The only two collectable events. Any other value is rejected server-side.
+enum AnalyticsEventType {
+  PAGE_VIEW
+  LINK_CLICK
+
+  @@map("analytics_event_type")
+}
+
+enum AnalyticsDeviceType {
+  DESKTOP
+  MOBILE
+  TABLET
+  OTHER
+  UNKNOWN
+
+  @@map("analytics_device_type")
+}
+
+enum AnalyticsBrowserFamily {
+  CHROME
+  SAFARI
+  FIREFOX
+  EDGE
+  OTHER
+  UNKNOWN
+
+  @@map("analytics_browser_family")
+}
+
+enum AnalyticsOsFamily {
+  WINDOWS
+  MACOS
+  LINUX
+  ANDROID
+  IOS
+  OTHER
+  UNKNOWN
+
+  @@map("analytics_os_family")
+}
+
+enum AnalyticsReferrerCategory {
+  DIRECT
+  SEARCH
+  SOCIAL
+  REFERRAL
+  CAMPAIGN
+  INTERNAL
+  UNKNOWN
+
+  @@map("analytics_referrer_category")
+}
+
+/// Rollup dimensions. `TOTAL` carries the period-independent event count.
+enum AnalyticsDimension {
+  TOTAL
+  DEVICE
+  BROWSER
+  OS
+  REFERRER
+
+  @@map("analytics_dimension")
+}
+
+/// Accepted analytics event. Retention default: 90 days (raw).
+model AnalyticsEvent {
+  id                  String                  @id @default(uuid()) @db.Uuid
+  eventType           AnalyticsEventType      @map("event_type")
+  /// Server clock at acceptance; the only time used for reporting.
+  occurredAt          DateTime                @map("occurred_at")
+  /// Asia/Jakarta calendar day of `occurredAt`. Stored explicitly so unique
+  /// counts can use `COUNT(DISTINCT (session_key_hash, day))` without a
+  /// timezone expression inside SQL.
+  day                 DateTime                @db.Date
+  /// Database clock at insert, for operational diagnostics only.
+  receivedAt          DateTime                @default(now()) @map("received_at")
+  /// SHA-256 keyed digest of a random first-party visitor id. Never the raw id.
+  visitorKeyHash      String?                 @map("visitor_key_hash")
+  /// SHA-256 keyed digest of a random first-party session id.
+  sessionKeyHash      String?                 @map("session_key_hash")
+  /// Unique per (event, identity, target, 30-second window or day). Makes event
+  /// insertion idempotent at the database level.
+  dedupeKey           String?                 @unique @map("dedupe_key")
+  /// Plain UUID without a foreign key: history outlives the link row.
+  linkId              String?                 @map("link_id") @db.Uuid
+  linkSlugSnapshot    String?                 @map("link_slug_snapshot")
+  linkTitleSnapshot   String?                 @map("link_title_snapshot")
+  linkCategorySnapshot String?                @map("link_category_snapshot")
+  deviceType          AnalyticsDeviceType     @default(UNKNOWN) @map("device_type")
+  browserFamily       AnalyticsBrowserFamily  @default(UNKNOWN) @map("browser_family")
+  osFamily            AnalyticsOsFamily       @default(UNKNOWN) @map("os_family")
+  referrerCategory    AnalyticsReferrerCategory @default(UNKNOWN) @map("referrer_category")
+  campaignSource      String?                 @map("campaign_source")
+  campaignMedium      String?                 @map("campaign_medium")
+  campaignName        String?                 @map("campaign_name")
+  createdAt           DateTime                @default(now()) @map("created_at")
+
+  /// Reporting period sweep.
+  @@index([occurredAt])
+  /// Jakarta day bucket for distinct counting and rollup reconciliation.
+  @@index([day, eventType])
+  /// Event-scoped period sweep (totals and distributions fallback).
+  @@index([eventType, occurredAt])
+  /// Per-link reporting.
+  @@index([linkId, occurredAt])
+  /// Distinct session/visitor counting stays index-only.
+  @@index([sessionKeyHash, occurredAt])
+  @@index([visitorKeyHash, occurredAt])
+  @@map("analytics_events")
+}
+
+/// Daily rollup, one row per (day, event type, dimension, dimension value).
+/// Written in the same transaction as the event, so reports never lag.
+model AnalyticsDailyMetric {
+  id             String             @id @default(uuid()) @db.Uuid
+  /// Asia/Jakarta calendar day.
+  day            DateTime           @db.Date
+  eventType      AnalyticsEventType @map("event_type")
+  dimension      AnalyticsDimension
+  /// `ALL` for the `TOTAL` dimension; the enum label otherwise.
+  dimensionValue String             @map("dimension_value")
+  count          Int                @default(0)
+
+  @@unique([day, eventType, dimension, dimensionValue])
+  @@index([day, eventType])
+  @@map("analytics_daily_metrics")
+}
+
+/// Per-link daily rollup with an immutable identity snapshot.
+model AnalyticsLinkMetric {
+  id                   String   @id @default(uuid()) @db.Uuid
+  day                  DateTime @db.Date
+  linkId               String   @map("link_id") @db.Uuid
+  linkSlugSnapshot     String?  @map("link_slug_snapshot")
+  linkTitleSnapshot    String?  @map("link_title_snapshot")
+  linkCategorySnapshot String?  @map("link_category_snapshot")
+  clicks               Int      @default(0)
+
+  @@unique([day, linkId])
+  @@index([day])
+  @@index([linkId])
+  @@map("analytics_link_metrics")
+}
