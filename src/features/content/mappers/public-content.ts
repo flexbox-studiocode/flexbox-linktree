@@ -69,6 +69,7 @@ export function toPublicLink(link: Link): PublicLink {
 
   return {
     id: link.slug,
+    linkId: link.id,
     title: link.title,
     description: link.description ?? "",
     icon,

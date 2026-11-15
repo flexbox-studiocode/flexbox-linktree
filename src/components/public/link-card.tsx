@@ -48,7 +48,7 @@ export default function LinkCard({ item }: LinkCardProps) {
   return (
     <a
       className="link-card"
-      href={href}
+      href={isExternal ? `/go/${encodeURIComponent(item.linkId)}` : href}
       {...(isExternal
         ? { target: "_blank", rel: "noopener noreferrer" }
         : null)}

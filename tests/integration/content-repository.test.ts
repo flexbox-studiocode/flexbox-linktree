@@ -268,7 +268,6 @@ describe.skipIf(!db)("public content queries (local database)", () => {
   });
 
   it("upserts seed data without creating duplicates", async () => {
-    const before = await db!.prisma.link.count();
     const category = await db!.prisma.category.findUnique({ where: { slug: "studio-picks" } });
 
     const existing = await db!.prisma.link.findUnique({ where: { slug: "flexbox-design-system" } });
@@ -292,6 +291,8 @@ describe.skipIf(!db)("public content queries (local database)", () => {
     });
 
     expect(upserted.slug).toBe("flexbox-design-system");
-    expect(await db!.prisma.link.count()).toBe(before);
+    // Integration files share one local database and run in parallel, so a global
+    // row count would race. The real invariant is that the natural key stays unique.
+    expect(await db!.prisma.link.count({ where: { slug: "flexbox-design-system" } })).toBe(1);
   });
 });

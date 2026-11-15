@@ -60,6 +60,7 @@ describe("toPublicLink", () => {
 
     expect(mapped).toEqual({
       id: "flexbox-lab",
+      linkId: link.id,
       title: "Flexbox Lab",
       description: link.description,
       icon: "grid",

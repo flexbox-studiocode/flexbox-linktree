@@ -24,6 +24,8 @@ export type PublicDestination =
 export type PublicLink = {
   /** Stable UI key (the public slug). */
   id: string;
+  /** Database id used by the server-resolved tracking redirect. */
+  linkId: string;
   title: string;
   description: string;
   icon: PublicLinkIcon;
