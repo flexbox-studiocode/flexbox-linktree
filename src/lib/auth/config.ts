@@ -4,6 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { findAdminById } from "@/features/auth/repositories/admin-user";
 import { GENERIC_LOGIN_ERROR } from "@/features/auth/schemas/login";
 import { authenticateAdmin } from "@/features/auth/services/authenticate-admin";
+import { isSecureCookieContext, sessionCookieName } from "@/lib/auth/cookies";
 import { resolveSourceIdentifier } from "@/lib/security/client-source";
 
 /**
@@ -28,25 +29,6 @@ import { resolveSourceIdentifier } from "@/lib/security/client-source";
 
 /** Session lifetime in seconds (8 hours), documented in `.docs/AUTH_SECURITY.md`. */
 export const ADMIN_SESSION_MAX_AGE_SECONDS = 8 * 60 * 60;
-
-export const ADMIN_SESSION_COOKIE = "next-auth.session-token";
-export const ADMIN_SECURE_SESSION_COOKIE = "__Secure-next-auth.session-token";
-
-/**
- * Auth.js names the session cookie with a `__Secure-` prefix when the configured
- * URL is HTTPS (or when running on Vercel). `getToken()` performs the same
- * derivation, so this helper keeps our own reads in sync with the library.
- */
-export function isSecureCookieContext(): boolean {
-  const url = process.env.NEXTAUTH_URL;
-  const vercel = process.env.VERCEL === "1" || Boolean(process.env.VERCEL);
-
-  return Boolean(vercel) || (typeof url === "string" && url.startsWith("https://"));
-}
-
-export function sessionCookieName(): string {
-  return isSecureCookieContext() ? ADMIN_SECURE_SESSION_COOKIE : ADMIN_SESSION_COOKIE;
-}
 
 export const authCookieConfig = {
   httpOnly: true,
