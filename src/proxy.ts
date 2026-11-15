@@ -24,6 +24,19 @@ import { sessionCookieName } from "@/lib/auth/cookies";
  * the database layer, keeping it light enough for an edge/CDN deployment.
  */
 
+/**
+ * Admin paths that must render for unauthenticated visitors.
+ *
+ * Kept as an explicit allowlist rather than a prefix check so a new protected
+ * page is private by default: forgetting to add it here makes it redirect to the
+ * login page instead of becoming public.
+ */
+const PUBLIC_ADMIN_PATHS = new Set([
+  "/admin/login",
+  "/admin/forgot-password",
+  "/admin/reset-password",
+]);
+
 function buildLoginRedirect(request: NextRequest): NextResponse {
   const loginUrl = new URL("/admin/login", request.url);
 
@@ -54,7 +67,7 @@ export async function proxy(request: NextRequest): Promise<Response> {
     secureCookie: sessionCookieName().startsWith("__Secure"),
   });
 
-  const isLoginPage = request.nextUrl.pathname === "/admin/login";
+  const isPublicAdminPage = PUBLIC_ADMIN_PATHS.has(request.nextUrl.pathname);
   const isAuthApi = request.nextUrl.pathname.startsWith("/api/auth/");
 
   const authenticated =
@@ -64,15 +77,15 @@ export async function proxy(request: NextRequest): Promise<Response> {
     token.role === "SUPER_ADMIN";
 
   if (!authenticated) {
-    if (isLoginPage || isAuthApi) {
+    if (isPublicAdminPage || isAuthApi) {
       return NextResponse.next();
     }
 
     return buildLoginRedirect(request);
   }
 
-  // Signed-in administrators do not need the login form.
-  if (isLoginPage) {
+  // Signed-in administrators do not need the sign-in or recovery screens.
+  if (isPublicAdminPage) {
     return NextResponse.redirect(new URL("/admin", request.url));
   }
 

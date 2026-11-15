@@ -27,6 +27,7 @@ const ALLOWED_METADATA_KEYS = new Set([
   "nextStatus",
   "authVersion",
   "removedBuckets",
+  "removedResetTokens",
   "expiresAt",
   "targetType",
 ]);

@@ -21,7 +21,9 @@
     "db:check": "tsx prisma/check.ts",
     "admin:bootstrap": "tsx --env-file=.env.local src/features/auth/cli/run.ts bootstrap.ts",
     "admin:invite": "tsx --env-file=.env.local src/features/auth/cli/run.ts invite.ts",
-    "admin:accept-invite": "tsx --env-file=.env.local src/features/auth/cli/run.ts accept-invitation.ts"
+    "admin:accept-invite": "tsx --env-file=.env.local src/features/auth/cli/run.ts accept-invitation.ts",
+    "admin:set-status": "tsx --env-file=.env.local src/features/auth/cli/run.ts set-status.ts",
+    "admin:cleanup": "tsx --env-file=.env.local src/features/auth/cli/run.ts cleanup.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.2",

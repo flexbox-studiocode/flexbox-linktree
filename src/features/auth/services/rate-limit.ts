@@ -49,6 +49,15 @@ export const SOURCE_RATE_LIMIT_POLICY: RateLimitPolicy = {
   lockoutSeconds: 15 * 60,
 };
 
+/**
+ * Recovery endpoints reuse the SOURCE bucket.
+ *
+ * The `admin_rate_limits` table has exactly two scopes (`ACCOUNT`, `SOURCE`) and
+ * that is deliberate: recovery, invitation acceptance, and sign-in are the same
+ * authentication surface, so one source that is flooding any of them must not be
+ * able to hammer the others for free.
+ */
+
 export type BucketDecision = {
   blocked: boolean;
   retryAfterSeconds: number;
@@ -181,4 +190,46 @@ export async function resetLoginThrottle(params: {
 /** Removes expired buckets. Safe to run on any schedule; returns rows deleted. */
 export async function cleanupExpiredRateLimits(now: Date = new Date()): Promise<number> {
   return deleteExpiredBuckets(now);
+}
+
+/**
+ * Source-only throttle for endpoints that must not reveal whether an account
+ * exists (recovery requests, invitation acceptance). Only the SOURCE bucket is
+ * consulted: an ACCOUNT bucket would leak account existence through timing or
+ * lockout, and there is nothing to protect per-account here.
+ */
+export async function checkSourceAllowed(params: {
+  sourceBucketKey: string | null;
+  now?: Date;
+}): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
+  if (!params.sourceBucketKey) {
+    return { allowed: true, retryAfterSeconds: 0 };
+  }
+
+  const now = params.now ?? new Date();
+  const bucket = await readBucket("SOURCE", params.sourceBucketKey);
+  const decision = decideFromBucket(bucket, SOURCE_RATE_LIMIT_POLICY, now);
+
+  return { allowed: !decision.blocked, retryAfterSeconds: decision.retryAfterSeconds };
+}
+
+/** Records one attempt against the SOURCE bucket. */
+export async function recordSourceAttempt(params: {
+  sourceBucketKey: string | null;
+  now?: Date;
+}): Promise<{ blocked: boolean; retryAfterSeconds: number }> {
+  if (!params.sourceBucketKey) {
+    return { blocked: false, retryAfterSeconds: 0 };
+  }
+
+  const now = params.now ?? new Date();
+  const bucket = await recordAttempt({
+    scope: "SOURCE",
+    keyHash: params.sourceBucketKey,
+    policy: SOURCE_RATE_LIMIT_POLICY,
+    now,
+  });
+  const decision = decideFromBucket(bucket, SOURCE_RATE_LIMIT_POLICY, now);
+
+  return { blocked: decision.blocked, retryAfterSeconds: decision.retryAfterSeconds };
 }

@@ -183,3 +183,11 @@ export async function findAdminWithPasswordHash(normalizedEmail: string) {
     select: { ...ADMIN_IDENTITY_SELECT, passwordHash: true },
   });
 }
+
+/** Same as above, addressed by id. Used by the self-service password change. */
+export async function findAdminWithPasswordHashById(id: string) {
+  return prisma.adminUser.findUnique({
+    where: { id },
+    select: { ...ADMIN_IDENTITY_SELECT, passwordHash: true },
+  });
+}
