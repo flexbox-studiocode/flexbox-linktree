@@ -1,7 +1,16 @@
 // Flexbox Linktree — Prisma schema
 // Prisma 7 configuration lives in prisma7.config.ts.
-// This schema is intentionally minimal for Phase 1. The full CMS domain model
-// is designed in a later phase.
+//
+// Phase 3 (Content Database and CMS Foundation) adds the content domain:
+// categories, links, typed site settings, and media metadata. Admin identity
+// and audit logs belong to Phase 4/5 and are intentionally not modelled here.
+//
+// Several invariants that Prisma cannot express are enforced by CHECK
+// constraints added in `prisma/migrations/<timestamp>_add_content_cms_foundation`:
+//   - destination type/value consistency
+//   - approved URL schemes for external destinations
+//   - internal anchors must be fragment-style (`#section`)
+//   - publication timestamps must match the publication status
 
 generator client {
   provider = "prisma-client"
@@ -22,4 +31,110 @@ model SystemCheck {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("system_checks")
+}
+
+/// Public visibility state of a link. Saving a draft never publishes it.
+enum PublicationStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+
+  @@map("publication_status")
+}
+
+/// How a published link resolves for a visitor.
+/// EXTERNAL uses `destinationUrl`, INTERNAL uses `internalAnchor`, and NONE
+/// renders a deliberate non-interactive card (for example the `Segera` state).
+enum LinkDestinationType {
+  EXTERNAL
+  INTERNAL
+  NONE
+
+  @@map("link_destination_type")
+}
+
+/// Editorial grouping of public link cards.
+model Category {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String   @unique
+  description String?
+  icon        String?
+  sortOrder   Int      @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  links Link[]
+
+  /// Public listing reads active categories in display order.
+  @@index([isActive, sortOrder, slug])
+  @@map("categories")
+}
+
+/// A single curated public destination.
+///
+/// Deletion policy: `categoryId` uses `Restrict`, so a category that still owns
+/// links cannot be deleted silently. Deactivate or reassign its links first.
+/// Archiving instead of deleting keeps future analytics references intact.
+model Link {
+  id          String   @id @default(uuid()) @db.Uuid
+  slug        String   @unique
+  categoryId  String   @map("category_id") @db.Uuid
+  title       String
+  description String?
+  icon        String?
+  tag         String?
+
+  destinationType LinkDestinationType @map("destination_type")
+  destinationUrl  String?             @map("destination_url")
+  internalAnchor  String?             @map("internal_anchor")
+
+  status      PublicationStatus @default(DRAFT)
+  isActive    Boolean           @default(true) @map("is_active")
+  isFeatured  Boolean           @default(false) @map("is_featured")
+  sortOrder   Int               @map("sort_order")
+  publishedAt DateTime?         @map("published_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  /// Primary public query path: category + publication + display order.
+  @@index([categoryId, status, isActive, sortOrder, slug])
+  /// Publication sweep without a category filter (public eligibility checks).
+  @@index([status, isActive, sortOrder, slug])
+  @@map("links")
+}
+
+/// Key-value website settings. Each key owns a typed Zod schema in
+/// `src/features/content/schemas/site-setting.ts`; there is no single
+/// uncontrolled JSON document.
+model SiteSetting {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("site_settings")
+}
+
+/// Media metadata only. Binary files live in the storage backend
+/// (`src/lib/storage/`), never inside PostgreSQL, and uploads are Phase 5.
+model MediaAsset {
+  id           String   @id @default(uuid()) @db.Uuid
+  originalName String   @map("original_name")
+  storageKey   String   @unique @map("storage_key")
+  mimeType     String   @map("mime_type")
+  sizeBytes    Int      @map("size_bytes")
+  width        Int?
+  height       Int?
+  altText      String?  @map("alt_text")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([mimeType])
+  @@map("media_assets")
 }
