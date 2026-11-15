@@ -11,8 +11,9 @@ Before implementation, read:
 3. `.docs/Tech-Stack.md` — selected technologies, versions, and compatibility rules.
 4. `.docs/Structure_File.md` — intended repository organization.
 5. `.docs/Roadmap.md` — current phase and exit criteria.
-6. `.docs/Desain.md` — visual direction for the public microsite.
-7. `.docs/LOCAL_DEVELOPMENT.md` — repeatable Windows local setup.
+6. `.docs/DATABASE_SCHEMA.md` — content tables, constraints, publication lifecycle, and seed/migration rules.
+7. `.docs/Desain.md` — visual direction for the public microsite.
+8. `.docs/LOCAL_DEVELOPMENT.md` — repeatable Windows local setup.
 
 The latest explicit project-owner instruction takes precedence. The approved PRD and Architecture documents extend the earlier visual design brief to include a private CMS, authentication, PostgreSQL, and analytics. The visual principles in `.docs/Desain.md` remain authoritative for the public User Page.
 
@@ -39,6 +40,7 @@ The latest explicit project-owner instruction takes precedence. The approved PRD
 - Use Server Components by default; add Client Components only where interactivity requires them.
 - Keep the application a modular monolith until a measured need justifies splitting services.
 - Validate all untrusted input on the server. Zod is the preferred validation library unless the owner chooses another.
+- Keep public content logic in `src/features/content` (schemas, repositories, mappers, services, types). Keep Prisma imports inside `server-only` modules; never import them into Client Components.
 - Reuse existing project conventions before introducing a new dependency or abstraction.
 - Keep project Node.js and pnpm versions aligned with `.nvmrc`, `package.json` `engines`, and the `packageManager` field.
 
@@ -64,6 +66,9 @@ The latest explicit project-owner instruction takes precedence. The approved PRD
 - Preserve analytics history when links/categories are archived or deleted; use deliberate nullable references or snapshots.
 - Do not expose PostgreSQL publicly in production.
 - Prisma 7 uses a driver adapter (`@prisma/adapter-pg` with the `pg` driver) at runtime. Do not fall back to Prisma 5/6 connection patterns.
+- Public content must satisfy `status = PUBLISHED AND link active AND owning category active AND valid destination`. Drafts, archived links, inactive links, and links under inactive categories must never reach a public query or component.
+- The development seed (`prisma/seed-data.ts`, applied with `pnpm db:seed`) must stay idempotent and non-destructive: upsert by natural key, never delete unrelated records.
+- Preserve existing schema and committed migrations; add new behavior through additive migrations with clear names.
 
 ## 6. Analytics and Privacy Rules
 

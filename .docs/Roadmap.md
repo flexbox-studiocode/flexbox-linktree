@@ -68,22 +68,22 @@ Tasks:
 - [x] Build link cards and safe external navigation.
 - [x] Build contact CTA and footer.
 - [x] Add SEO and social sharing metadata.
-- [ ] Implement public data loading with published/active records only.
+- [x] Implement public data loading with published/active records only.
 - [x] Verify mobile, tablet, desktop, keyboard, reduced motion, and contrast.
 
 **Exit criteria:** public page renders correctly from database content and has no draft leakage.
 
-Phase 2 status: **complete for the static-content milestone.** All page, design, responsive, accessibility, metadata, and verification work is done and recorded in `.docs/PUBLIC_PAGE.md`; the production build emits a fully static `/`.
+Phase 2 status: **complete.** All page, design, responsive, accessibility, metadata, and verification work is done and recorded in `.docs/PUBLIC_PAGE.md`. The database-backed data loading carry-over was completed in Phase 3.
 
 Deliberate carry-over into Phase 3 (Content Database and CMS Foundation):
 
-- Public data currently comes from the typed configuration in `src/features/public/content.ts`, not from PostgreSQL. "Public data loading with published/active records only" therefore cannot be satisfied yet and stays unchecked until the database-backed content layer exists.
-- Phase 2 content contains no drafts, archived records, or private admin data, so no draft leakage is possible in the current state; the published-only query rule is verified in Phase 3.
+- Public data came from the typed configuration in `src/features/public/content.ts` during Phase 2. It was replaced in Phase 3 by the database-backed content service, so "Public data loading with published/active records only" is now satisfied and checked.
+- Phase 2 content contained no drafts, archived records, or private admin data, so no draft leakage was possible in that state; the published-only query rule is verified in Phase 3.
 
 Content items still awaiting owner confirmation before public release:
 
-- Real destinations for Flexbox Design System, Flexbox Lab, Website Flexbox, Sumber Daya, Karya Digital, and Eksperimen Visual. They render as non-interactive "Segera" cards until then.
-- The public contact channel. The contact section shows a status label until `contactEmail` in `src/features/public/contact.ts` is set to a verified address.
+- Real destinations for Flexbox Design System, Flexbox Lab, Website Flexbox, Sumber Daya, Karya Digital, and Eksperimen Visual. They render as non-interactive "Segera" cards until then. Since Phase 3 they are stored as `EXTERNAL`-eligible rows with `destinationType = NONE`, so unblocking them is a data change, not a code change.
+- The public contact channel. The contact section shows a status label while the `contact.contactEmail` site setting is `null`; setting a verified address enables the contact call-to-action.
 - Final production domain, which blocks the canonical URL, `metadataBase`, Open Graph image, and sitemap.
 
 Open design-verification items (Figma was not reachable from the local browser during Phase 2, returning an edge access error):
@@ -98,15 +98,19 @@ Open design-verification items (Figma was not reachable from the local browser d
 **Goal:** Build the database-backed content layer.
 
 Tasks:
-- [ ] Design and review Prisma schema for categories, links, settings, media metadata, admin identity, and audit logs.
-- [ ] Add migrations and development seed data.
-- [ ] Implement typed data-access/service functions.
-- [ ] Implement server-side validation for link/category/settings data.
-- [ ] Implement link publication state transitions.
-- [ ] Implement category ordering and link ordering.
-- [ ] Add tests for public filtering and publication rules.
+- [x] Design and review Prisma schema for categories, links, settings, media metadata, admin identity, and audit logs.
+  - Categories, links, typed site settings, and media metadata are implemented. Admin identity and audit logs are deliberately deferred to Phases 4 and 5 (see `.docs/DATABASE_SCHEMA.md`).
+- [x] Add migrations and development seed data.
+- [x] Implement typed data-access/service functions.
+- [x] Implement server-side validation for link/category/settings data.
+- [x] Implement link publication state transitions.
+- [x] Implement category ordering and link ordering.
+- [x] Add tests for public filtering and publication rules.
+- [ ] Verify final domain, email, and social destinations before public release.
 
 **Exit criteria:** public content is database-driven and content lifecycle rules are tested.
+
+Phase 3 status: **complete.** The public page loads published, active content from PostgreSQL through `src/features/content`. Six destinations and the public contact channel remain unconfirmed and are still rendered as non-interactive states; resolving them is an owner content decision, not missing engineering work.
 
 ## Phase 4 — Authentication and Authorization
 
@@ -218,8 +222,8 @@ Potential follow-up work, only after observing real usage:
 |---|---|
 | Phase 0 — Product and Documentation Baseline | Complete |
 | Phase 1 — Local Environment and Project Foundation | Complete |
-| Phase 2 — Public User Page | Complete (static content; database-backed loading deferred to Phase 3) |
-| Phase 3 — Content Database and CMS Foundation | Not started |
+| Phase 2 — Public User Page | Complete |
+| Phase 3 — Content Database and CMS Foundation | Complete |
 | Phase 4 — Authentication and Authorization | Not started |
 | Phase 5 — Full CMS | Not started |
 | Phase 6 — Advanced Analytics | Not started |

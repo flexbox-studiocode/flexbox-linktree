@@ -106,6 +106,25 @@ Route names may be adjusted during implementation, but public/admin access bound
 
 Owns link, category, settings, and publication rules. Public queries must return only active, published records and active categories.
 
+**Implemented in Phase 3** as `src/features/content`:
+
+| Module | Responsibility |
+|---|---|
+| `schemas/` | Zod validation for categories, links, destinations, publication transitions, and each site-setting key |
+| `repositories/content.ts` | Server-only Prisma queries with publication/active filters and deterministic ordering |
+| `mappers/public-content.ts` | Prisma record → public DTO mapping; drops admin-only fields and unverified destinations |
+| `services/content.ts` | Cached public content composition, per-key settings fallback, safe failure handling |
+| `types/public-content.ts` | Stable public DTO contracts consumed by `src/components/public` |
+| `constants.ts` | Approved in-page anchors, shared by the page and the validation schema |
+
+Public eligibility is enforced in SQL, not in React:
+
+```text
+PublicLink = status PUBLISHED AND link active AND owning category active AND valid destination
+```
+
+See `.docs/DATABASE_SCHEMA.md` for tables, constraints, indexes, and the destination model.
+
 ### 6.2 Authentication and Authorization
 
 Auth.js handles authentication/session integration. Application authorization checks the active allowlisted member record and the `SUPER_ADMIN` role. Every protected server action, route handler, and server-side data access must perform authorization independently.
@@ -229,15 +248,17 @@ Never share a database URL, Auth.js secret, OAuth secret, or storage credential 
 
 Prisma CLI does not inherit Next.js environment loading. `prisma7.config.ts` loads `.env.local` explicitly so `prisma validate`, `prisma generate`, `prisma migrate`, and `prisma studio` operate on the same local database as the application. Keep that behavior; do not introduce a second credential source for the CLI.
 
-## 11.1 Current Implementation Status (Phase 1)
+## 11.1 Current Implementation Status (Phase 3)
 
-The repository currently contains only the foundation:
+The repository currently contains:
 
-- Next.js App Router application, TypeScript strict mode, Tailwind CSS v4 tokens, and a minimal placeholder page.
-- Prisma 7 with the `pg` driver adapter, a single `SystemCheck` model, the `init` migration, and a local connectivity check.
-- Lint, typecheck, unit test, and production build scripts.
+- Next.js App Router application, TypeScript strict mode, Tailwind CSS v4 tokens, and the public microsite (Phase 2, preserved).
+- Prisma 7 with the `pg` driver adapter and the `SystemCheck` health-check model plus the content domain: `categories`, `links`, `site_settings`, and `media_assets`, with enums, foreign keys, CHECK constraints, and indexes (Phase 3).
+- A typed content layer in `src/features/content`: Zod schemas, repositories, mappers, and services. The public route reads published, active content from PostgreSQL through `getPublicContent()`.
+- Development seed data in `prisma/seed-data.ts`, upserted by `pnpm db:seed`.
+- Lint, typecheck, unit/integration test, production build, visual QA, and accessibility QA scripts.
 
-Nothing in this section implies that the public microsite, admin CMS, authentication, media library, analytics, or deployment exists yet. Those are later phases.
+Nothing in this section implies that the admin CMS, authentication, media upload, analytics, or deployment exists yet. Those are later phases. `.docs/DATABASE_SCHEMA.md` documents the content schema in detail.
 
 ## 12. Database Migration and Release
 
@@ -275,6 +296,8 @@ Persistent Docker volumes protect against container replacement, not VPS loss. A
 | `.docs/Tech-Stack.md` | Selected technologies, versions, and version policy |
 | `.docs/Structure_File.md` | Repository layout and import conventions |
 | `.docs/Roadmap.md` | Phases and measurable exit criteria |
+| `.docs/DATABASE_SCHEMA.md` | Content tables, constraints, publication lifecycle, seed, and migration rules |
 | `.docs/Desain.md` | Public visual system (original form preserved) |
 | `.docs/LOCAL_DEVELOPMENT.md` | Repeatable local Windows setup |
+| `.docs/PUBLIC_PAGE.md` | Public page sections, content model, destination policy, and QA commands |
 | `AGENTS.md` | Operative implementation rules for contributors and assistants |

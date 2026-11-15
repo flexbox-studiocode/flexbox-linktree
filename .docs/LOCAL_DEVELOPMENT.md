@@ -155,6 +155,7 @@ Open <http://localhost:3000>. Do not start a second development server if one is
 | Generate the client | `pnpm db:generate` |
 | Create and apply a development migration | `pnpm db:migrate --name <migration_name>` |
 | Apply committed migrations | `pnpm db:migrate:deploy` |
+| Seed the development content | `pnpm db:seed` |
 | Inspect data | `pnpm db:studio` |
 | Verify database connectivity | `pnpm db:check` |
 
@@ -163,16 +164,38 @@ Notes:
 - Prisma 7 configuration lives in `prisma7.config.ts`.
 - The generator emits `prisma-client` output into `src/generated/prisma`, which is git-ignored. Regenerate after cloning or after schema changes.
 - `prisma migrate dev` is destructive by nature (it can reset the database when drift is detected). Use it only against the local container.
-- The initial migration is `prisma/migrations/<timestamp>_init` and creates the `SystemCheck` table.
+- Committed migrations: `prisma/migrations/<timestamp>_init` (creates `SystemCheck`) and `prisma/migrations/<timestamp>_add_content_cms_foundation` (creates the content domain plus its CHECK constraints).
+- `pnpm db:seed` upserts the development dataset from `prisma/seed-data.ts`. It is idempotent: running it twice leaves 2 categories, 8 links, and 7 site settings, and it never deletes unrelated records.
+- `prisma/seed.ts` is also wired as the Prisma `migrations.seed` command, so `prisma migrate dev`/`migrate reset` can invoke it automatically.
+
+### Seeding after a schema change
+
+```powershell
+pnpm db:migrate:deploy
+pnpm db:generate
+pnpm db:seed
+```
+
+### Local backup before a risky schema change
+
+```powershell
+New-Item -ItemType Directory -Force -Path .local-storage\backups | Out-Null
+docker exec flexbox-linktree-db pg_dump -U flexbox -d flexbox_linktree_dev -Fc -f /tmp/backup.dump
+docker cp flexbox-linktree-db:/tmp/backup.dump .local-storage\backups\backup.dump
+```
+
+`.local-storage/` is git-ignored. Never commit a dump.
 
 ## 8. Quality Checks
 
 ```powershell
 pnpm lint         # ESLint
 pnpm typecheck    # tsc --noEmit, strict mode
-pnpm test         # Vitest unit tests
+pnpm test         # Vitest unit + database integration tests
 pnpm build        # Production build
 ```
+
+`pnpm test` includes `tests/integration`, which needs the local PostgreSQL container to be running and migrated. Those tests are strictly additive and delete only the records they created. If `DATABASE_URL` is missing or does not point at a loopback host, the integration suite is skipped instead of running anywhere else.
 
 Run all four before committing an application change. Report exactly which ran and their results.
 

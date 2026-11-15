@@ -15,47 +15,67 @@
 
 ## 2. Proposed Repository Tree
 
-The tree below is the **target structure** for the full product. Sections marked "current" describe what exists after Phase 2.
+The tree below is the **target structure** for the full product. Sections marked "current" describe what exists after Phase 3.
 
-### 2.1 Current state (after Phase 2)
+### 2.1 Current state (after Phase 3)
 
 ```text
 flexbox-linktree/
 ├── .docs/                       # normalized documentation
-│   ├── PUBLIC_PAGE.md           # Phase 2 public page + content model reference
+│   ├── DATABASE_SCHEMA.md       # Phase 3 content schema, constraints, seed, lifecycle
+│   ├── PUBLIC_PAGE.md           # public page + content model reference
 │   └── ... (PRD, Architecture, Desain, Tech-Stack, Roadmap, Structure_File, LOCAL_DEVELOPMENT)
+├── .local-storage/              # git-ignored local backups/probes
 ├── .flexbox/LogoFlexBox.png     # original brand source asset
 ├── prisma/
-│   ├── schema.prisma            # Prisma 7 schema, SystemCheck model
-│   ├── migrations/              # committed migrations (init)
+│   ├── schema.prisma            # SystemCheck + content domain
+│   ├── migrations/              # init, add_content_cms_foundation
+│   ├── seed.ts                  # idempotent upsert runner
+│   ├── seed-data.ts             # canonical development dataset
 │   └── check.ts                 # local connectivity/query check
 ├── public/assets/flexbox-logo.png
 ├── scripts/
 │   ├── visual-qa.mjs            # viewport screenshots + overflow/console/network checks
 │   ├── a11y-audit.mjs           # landmarks, names, contrast, focus, reduced motion
 │   └── a11y-interaction.mjs     # 200% zoom, anchor offsets, tab order
-├── tests/unit/
-│   ├── url.test.ts              # destination-scheme rules
-│   └── public-content.test.ts   # public content model + page structure contracts
+├── tests/
+│   ├── setup.ts                 # loads .env.local for integration tests
+│   ├── stubs/                   # server-only + next/cache test doubles
+│   ├── helpers/                 # local-db guard + record fixtures
+│   ├── unit/
+│   │   ├── url.test.ts              # destination-scheme rules
+│   │   ├── content-schemas.test.ts  # category/link/destination/settings validation
+│   │   ├── public-content.mapper.test.ts    # DTO mapping + destination resolution
+│   │   ├── public-content.service.test.ts   # composition, fallbacks, empty states
+│   │   └── seed-data.test.ts        # seed dataset contracts
+│   └── integration/
+│       └── content-repository.test.ts  # publication filters against local PostgreSQL
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx           # fonts, metadata, viewport, lang
-│   │   ├── page.tsx             # public route composition (static)
+│   │   ├── page.tsx             # public route; loads content from PostgreSQL
 │   │   ├── globals.css          # design tokens + public stylesheet
 │   │   ├── icon.png             # favicon from brand logo
 │   │   └── robots.ts            # /robots.txt
 │   ├── components/public/
-│   │   ├── site-header.tsx
-│   │   ├── hero.tsx
-│   │   ├── directory.tsx
-│   │   ├── link-card.tsx
+│   │   ├── site-header.tsx      # takes `site` props
+│   │   ├── hero.tsx             # takes `site` props
+│   │   ├── directory.tsx        # takes `categories` props
+│   │   ├── link-card.tsx        # takes a PublicLink
 │   │   ├── link-icon.tsx        # inline outline SVG icon set
-│   │   ├── contact-cta.tsx
-│   │   └── site-footer.tsx
-│   ├── features/public/
-│   │   ├── content.ts           # LinkItem/LinkCategory, site copy, anchors
-│   │   ├── contact.ts           # contact destination switch (unset)
-│   │   └── copyright.ts         # stable copyright year
+│   │   ├── contact-cta.tsx      # takes `site` props
+│   │   └── site-footer.tsx      # takes `site` + `year` props
+│   ├── features/
+│   │   ├── content/
+│   │   │   ├── constants.ts     # approved public anchors
+│   │   │   ├── fallbacks.ts     # documented branding fallback (no link data)
+│   │   │   ├── mappers/         # Prisma record -> public DTO
+│   │   │   ├── repositories/    # server-only Prisma queries
+│   │   │   ├── schemas/         # Zod validation
+│   │   │   ├── services/        # cached public content composition
+│   │   │   └── types/           # public DTO contracts
+│   │   └── public/
+│   │       └── copyright.ts     # stable copyright year
 │   ├── generated/prisma/        # generated Prisma Client (git-ignored)
 │   ├── lib/
 │   │   ├── prisma/client.ts
@@ -70,7 +90,7 @@ flexbox-linktree/
 ├── package.json
 ├── pnpm-lock.yaml
 ├── pnpm-workspace.yaml
-├── prisma7.config.ts            # Prisma 7 CLI configuration
+├── prisma7.config.ts            # Prisma 7 CLI configuration (+ seed command)
 ├── tsconfig.json
 ├── vitest.config.mts
 ├── .env.example
@@ -78,7 +98,7 @@ flexbox-linktree/
 └── .gitignore
 ```
 
-Phase 3 and later phases add `src/features/links`, `src/features/categories`, `src/features/settings`, `src/components/admin`, and the `src/app/admin` tree. The public page already consumes typed `LinkItem`/`LinkCategory` props, so swapping the static content module for database queries does not require rewriting the presentation components.
+Phases 4 and later add `src/features/auth`, `src/components/admin`, `src/app/admin`, media storage adapters, and analytics modules. The public presentation components already consume typed DTO props, so later CMS work does not require rewriting them.
 
 ### 2.2 Target structure
 
@@ -238,16 +258,14 @@ Product, design, architecture, roadmap, stack, and local setup documentation. `D
 Original Flexbox brand assets and internal reference material. Copy approved web-ready assets into `public/assets/` when needed; preserve the original source asset.
 
 ### `prisma/`
-Prisma schema, committed database migrations, and development seed data. Never place production database dumps or secrets here.
-
-### `src/app/`
+Prisma schema, committed database migrations, and development seed data. Never place production database dumps or secrets here.### `src/app/`
 Next.js route definitions, layouts, loading/error boundaries, and narrow route handlers. Keep page components focused on composition and data loading.
 
 ### `src/components/`
 Reusable presentation components. Separate public and admin components because their visual systems and interaction requirements differ.
 
 ### `src/features/`
-Domain-oriented application logic. Each feature owns its validation schemas, services, queries, and actions where applicable.
+Domain-oriented application logic. The `content` feature owns schemas, repositories, mappers, services, and types for the public content layer. Future features (`auth`, `media`, `analytics`) will be added alongside it.
 
 ### `src/lib/`
 Shared infrastructure adapters and cross-cutting concerns: Auth.js, Prisma singleton/client, storage, environment validation, authorization, security, and utilities.
@@ -299,3 +317,4 @@ Additionally ignored in this repository: `src/generated/prisma/` (generated Pris
 - Do not import server-only modules into Client Components.
 - Do not place secrets or database clients in files marked with `"use client"`.
 - Keep public components independent of admin navigation and admin-only data.
+- Use the public DTO types in `src/features/content/types/public-content.ts` for all component props that represent published content; do not pass Prisma model types into components.

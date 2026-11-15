@@ -1,12 +1,12 @@
-# Public User Page — Phase 2
+# Public User Page
 
-**Product:** Flexbox Linktree / Flexbox Studio Digital Hub  
-**Status:** Implemented (Phase 2)  
+**Product:** Flexbox Linktree / Flexbox Studio Digital Hub
+**Status:** Implemented in Phase 2; content source moved to PostgreSQL in Phase 3
 **Language:** English
 
 ## 1. Scope
 
-Phase 2 implements the public microsite only. The private Admin CMS, authentication, database-backed content, analytics collection, and deployment belong to later roadmap phases (see `.docs/Roadmap.md`).
+Phase 2 implements the public microsite only. Phase 3 keeps the presentation identical but replaces the static content module with published content loaded from PostgreSQL through `src/features/content`. The private Admin CMS, authentication, analytics collection, and deployment still belong to later roadmap phases (see `.docs/Roadmap.md`).
 
 The public page is an editorial directory. It deliberately contains **no** public search, filter chips, pagination, or result counters, per `.docs/PRD.md` and `.docs/Desain.md`.
 
@@ -27,35 +27,47 @@ The public page is an editorial directory. It deliberately contains **no** publi
 
 ## 3. Content model
 
-Content lives outside the presentation components:
+Content no longer lives in the presentation components. Since Phase 3 it is loaded from PostgreSQL:
 
-- `src/features/public/content.ts` — `LinkCategory`, `LinkItem`, `siteContent`, `publicAnchors`.
-- `src/features/public/contact.ts` — the contact destination switch.
-- `src/features/public/copyright.ts` — the stable copyright year.
+- `src/features/content/services/content.ts` — `getPublicContent()` (cached, safe failure handling).
+- `src/features/content/repositories/content.ts` — server-only Prisma queries that enforce publication and activation filters.
+- `src/features/content/mappers/public-content.ts` — record → DTO mapping and destination resolution.
+- `src/features/content/types/public-content.ts` — the DTOs the components receive.
+- `src/features/content/constants.ts` — approved internal anchors.
+- `prisma/seed-data.ts` — the development dataset (2 categories, 8 links, 7 settings).
 
 ```ts
-export type LinkItem = {
-  id: string;
+export type PublicLink = {
+  id: string;              // stable public slug
   title: string;
   description: string;
-  category: string;          // owning category slug
-  icon: LinkIconName;
-  href?: string;             // omitted until the owner confirms the destination
+  icon: PublicLinkIcon;
+  href?: string;           // omitted until the owner confirms the destination
   tag?: string;
-  isFeatured?: boolean;
+  isFeatured: boolean;
   sortOrder: number;
 };
 
-export type LinkCategory = {
+export type PublicCategory = {
   id: string;
   title: string;
   slug: string;
   sortOrder: number;
-  links: LinkItem[];
+  links: PublicLink[];
 };
 ```
 
-Categories and links are sorted by `sortOrder` at render time, so the CMS phase can reorder records without touching components. Presentation components receive `LinkItem` props only, which keeps a later database-backed replacement mechanical.
+`src/app/page.tsx` awaits `getPublicContent()` and passes `site` and `categories` into the presentation components. Categories and links arrive already filtered by publication/activation state and already ordered by `{ sortOrder, slug }`, so no component-side sorting or filtering remains.
+
+### What is never sent to a component
+
+`status`, `publishedAt`, `isActive`, `categoryId`, database `id` values, and any audit metadata stay server-side. Drafts, archived links, inactive links, and links belonging to inactive categories are excluded in SQL.
+
+### Empty and failure states
+
+- No eligible links at all: the directory renders a short "content is being prepared" note inside the existing section, instead of empty category blocks.
+- Database unavailable: the page still renders the brand shell using the documented fallback copy in `src/features/content/fallbacks.ts`, and the directory is empty. Static link data is **never** substituted, and no stack trace or credential is exposed to visitors.
+- A missing or invalid individual site setting falls back per key; other settings still apply.
 
 ## 4. Link and destination policy
 
@@ -72,14 +84,16 @@ These items are intentionally published **without** a destination. The owner mus
 
 | Item | Status |
 |---|---|
-| Flexbox Design System | No URL confirmed |
-| Flexbox Lab | No URL confirmed |
-| Website Flexbox | No URL confirmed |
-| Sumber Daya | No URL confirmed |
-| Karya Digital | No URL confirmed |
-| Eksperimen Visual | No URL confirmed |
+| Flexbox Design System | No URL confirmed (`destinationType = NONE`) |
+| Flexbox Lab | No URL confirmed (`destinationType = NONE`) |
+| Website Flexbox | No URL confirmed (`destinationType = NONE`) |
+| Sumber Daya | No URL confirmed (`destinationType = NONE`) |
+| Karya Digital | No URL confirmed (`destinationType = NONE`) |
+| Eksperimen Visual | No URL confirmed (`destinationType = NONE`) |
 
-No email address, social handle, or external contact URL is published. `contactEmail` in `src/features/public/contact.ts` is `null`; while it is `null`, the contact section shows the status label "Kanal kontak segera dipublikasikan" instead of a fake `mailto:` link. Setting it to a verified address switches the section to a real contact button with no other code change.
+Since Phase 3, unblocking any of these is a **data** change: set `destinationType = EXTERNAL`, fill `destinationUrl`, and the card becomes an interactive link with no code change. The mapper still re-validates the stored URL and keeps the card non-interactive if the value is not an approved HTTP(S)/`mailto:` destination.
+
+No email address, social handle, or external contact URL is published. The `contact.contactEmail` site setting is `null`; while it is `null`, the contact section shows the status label "Kanal kontak segera dipublikasikan" instead of a fake `mailto:` link. Setting it to a verified address switches the section to a real contact button with no other code change.
 
 ## 5. Design tokens and typography
 
@@ -141,24 +155,35 @@ Intentionally **not** set until the owner confirms real values: canonical URL, `
 
 ## 9. Performance notes
 
-- The public page is fully static (`○ /` in the build output). No database call, no client component, no analytics script.
+- The public route is prerendered as a static shell with a bounded cache: the build output shows `○ /` with `Revalidate 1m` and `Expire 1h`. The published content is read from PostgreSQL through `use cache` + `cacheLife("minutes")` + `cacheTag("public-content")`, so a normal visit is served from cache.
+- No client component, no analytics script, and no request-time database call for a cached read.
 - Two font families, self-hosted and preloaded by `next/font`; no third-party font request at runtime.
 - The brand logo is served through `next/image` with explicit `sizes` and preserved aspect ratio.
+
+## 9.1 Cache and revalidation policy
+
+Public content is cached with Next.js 16 Cache Components. `cacheLife("minutes")` bounds staleness: entries revalidate after one minute and expire after one hour, so new content cannot stay stale indefinitely. `cacheTag("public-content")` is set now so a future authenticated CMS mutation can call `revalidateTag("public-content", "max")`. No unauthenticated revalidation endpoint is exposed in Phase 3.
+
+A cache refresh is not a fallback: if the database query fails, the page renders the documented fallback branding plus an empty directory, and stale static link data is never substituted.
 
 ## 10. How to verify
 
 ```powershell
 pnpm lint
 pnpm typecheck
-pnpm test
+pnpm test       # unit + local-database integration tests
 pnpm build
-# with the dev server running on http://localhost:3000
+# with the app served on http://localhost:3000
 pnpm qa:visual   # screenshots + overflow/console/network checks -> .qa-screens/
 pnpm qa:a11y     # structure, names, contrast, focus, zoom, reduced motion
 ```
 
+`tests/integration/content-repository.test.ts` verifies the published-only filter, ordering, non-interactive `NONE`/`Segera` cards, the `#kontak` anchors, category deactivation, the `RESTRICT` delete rule, and the destination CHECK constraints against the local container.
+
 ## 11. Known limitations
 
 - Figma comparison was unavailable (see the Phase 2 report). The implementation follows `.docs/Desain.md` and the owner's supplied screenshot description; unverified design details are recorded in the Phase 2 report and `.docs/Roadmap.md`.
-- Six directory destinations and the public contact channel remain unpublished until the owner confirms them.
+- Six directory destinations and the public contact channel remain unpublished until the owner confirms them. They are now stored as `PUBLISHED` + `destinationType = NONE` (and `contact.contactEmail = null`), so unblocking them is a data change rather than a code change.
 - `copyrightYear` is a constant (`2026`) because this Next.js version rejects `new Date()` during prerendering under Cache Components; it avoids per-request rendering for a footer value. Refresh it annually or move it to the CMS in Phase 5.
+- There is no draft preview route: public output always shows published content only, per the approved product scope.
+- Admin authentication, the CMS UI, media upload, and analytics are not implemented; they belong to Phases 4–6.

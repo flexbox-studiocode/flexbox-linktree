@@ -11,27 +11,29 @@ The public experience is deliberately a microsite, not an application dashboard.
 
 ## Status
 
-**Phase 2 — Public User Page** is implemented as a fully static microsite. Phase 1 (local environment and project foundation) remains in place.
+**Phase 3 — Content Database and CMS Foundation** is complete: the public page now loads its published content from PostgreSQL through a typed, server-validated content layer. Phase 2 (the public microsite) and Phase 1 (local environment and project foundation) remain in place.
 
 Implemented at this point:
 
 - Next.js App Router application with TypeScript (strict) and Tailwind CSS v4.
 - Public Flexbox Studio Digital Hub: header, hero, editorial directory with eight curated cards, contact call-to-action, and **blue** graphite footer.
 - Safe destination handling through `src/lib/utils/url.ts`; unconfirmed destinations render as non-interactive "Segera" cards rather than invented links.
+- PostgreSQL content schema (`categories`, `links`, `site_settings`, `media_assets`) with enums, foreign keys, CHECK constraints, and indexes.
+- Typed content layer in `src/features/content`: Zod validation, server-only repositories, DTO mappers, and cached services. The public route reads published, active records only.
+- Idempotent development seed in `prisma/seed-data.ts`, applied with `pnpm db:seed`.
 - Self-hosted Anton (display) and Manrope (body fallback) through `next/font`.
 - Page metadata, favicon, and `/robots.txt`.
 - Local PostgreSQL 17 running in Docker, connected through Prisma 7 with the `pg` driver adapter.
-- Lint, typecheck, unit test, production build, and browser QA scripts.
+- Lint, typecheck, unit + database integration tests, production build, and browser QA scripts.
 
 Not implemented yet (later roadmap phases):
 
-- Database-backed public content (Phase 3).
-- Admin dashboard, login UI, and authentication flow (Phase 4–5).
-- Link/category/settings/media CMS features (Phase 5).
+- Admin authentication and authorization (Phase 4).
+- Admin dashboard, login UI, and link/category/settings/media CMS features (Phase 5).
 - Analytics collection and reporting (Phase 6).
 - Production deployment, Coolify, and staging infrastructure (Phase 8).
 
-Content still awaiting owner confirmation: six directory destinations, the public contact channel, and the final production domain. See `.docs/Roadmap.md` (Phase 2) and `.docs/PUBLIC_PAGE.md`.
+Content still awaiting owner confirmation: six directory destinations, the public contact channel, and the final production domain. They are stored as non-interactive states (`destinationType = NONE`, `contact.contactEmail = null`), so resolving them is a data change rather than a code change. See `.docs/Roadmap.md`, `.docs/PUBLIC_PAGE.md`, and `.docs/DATABASE_SCHEMA.md`.
 
 See `.docs/Roadmap.md` for the full phase plan and exit criteria.
 
@@ -72,9 +74,10 @@ pnpm install
 Copy-Item .env.example .env.local
 # then set DATABASE_URL and a locally generated AUTH_SECRET
 
-# 4. Apply migrations and generate the Prisma client
+# 4. Apply migrations, generate the Prisma client, and seed content
 pnpm db:migrate:deploy
 pnpm db:generate
+pnpm db:seed
 
 # 5. Start the app
 pnpm dev
@@ -93,6 +96,7 @@ Full Windows instructions, environment-variable rules, database commands, reset 
 | `.docs/Tech-Stack.md` | Selected technologies, versions, and compatibility policy. |
 | `.docs/Structure_File.md` | Repository layout and conventions. |
 | `.docs/Roadmap.md` | Phases and measurable exit criteria. |
+| `.docs/DATABASE_SCHEMA.md` | Content tables, relationships, constraints, indexes, publication lifecycle, destination model, and seed/migration commands. |
 | `.docs/PUBLIC_PAGE.md` | Public page sections, content model, destination policy, and QA commands. |
 | `.docs/LOCAL_DEVELOPMENT.md` | Repeatable local Windows setup. |
 | `.docs/Desain.md` | Visual design authority for the public microsite (kept in its original Indonesian form). |
@@ -109,13 +113,14 @@ Brand assets live in `.flexbox/` (source) and `public/assets/` (web-ready copies
 | `pnpm start` | Start the production build. |
 | `pnpm lint` | ESLint. |
 | `pnpm typecheck` | TypeScript check with `tsc --noEmit`. |
-| `pnpm test` | Vitest unit tests. |
-| `pnpm qa:visual` | Viewport screenshots plus overflow, console, and network checks (needs the dev server). |
-| `pnpm qa:a11y` | Accessibility, contrast, zoom, anchor, and reduced-motion checks (needs the dev server). |
+| `pnpm test` | Vitest unit tests plus local-database integration tests. |
+| `pnpm qa:visual` | Viewport screenshots plus overflow, console, and network checks (needs the app server). |
+| `pnpm qa:a11y` | Accessibility, contrast, zoom, anchor, and reduced-motion checks (needs the app server). |
 | `pnpm db:generate` | Generate Prisma Client. |
 | `pnpm db:validate` | Validate the Prisma schema. |
-| `pnpm db:migrate` | Create/apply a development migration. |
+| `pnpm db:migrate` | Create/apply a development migration (local database only). |
 | `pnpm db:migrate:deploy` | Apply committed migrations (staging/production safe). |
+| `pnpm db:seed` | Upsert the development content dataset (idempotent). |
 | `pnpm db:studio` | Open Prisma Studio. |
 | `pnpm db:check` | Run the local Prisma connectivity check. |
 

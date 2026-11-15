@@ -67,14 +67,30 @@ OAuth with a Prisma adapter and database sessions remains an option for a later 
 
 **Recommended:** Zod for server-side validation of admin forms, API inputs, settings, links, and environment variables. Client-side validation is for user experience; server-side validation is mandatory.
 
+**Implemented in Phase 3** with `zod` 4.6.7 (pinned, runtime dependency). Schemas live in `src/features/content/schemas/`:
+
+- `category.ts` — category create/update payloads.
+- `link.ts` — link payloads, publication status, publication timestamp consistency, and publication transitions.
+- `destination.ts` — discriminated union over `EXTERNAL` / `INTERNAL` / `NONE`, with an allowlist of internal anchors.
+- `site-setting.ts` — one typed schema per site-setting key plus `parseSiteSetting()`.
+
+The same rules are mirrored by PostgreSQL CHECK constraints so a manual SQL edit cannot store an incoherent destination or an impossible publication state.
+
 ### 2.7 Testing and Code Quality
 
 Implemented in this repository:
 
 - ESLint (`pnpm lint`, `eslint .` with flat config, generated Prisma output ignored).
 - TypeScript compiler check (`pnpm typecheck`, `tsc --noEmit`, strict mode).
-- Vitest (`pnpm test`, `vitest run`, unit tests under `tests/unit`).
+- Vitest (`pnpm test`, `vitest run`, unit tests under `tests/unit` and database integration tests under `tests/integration`).
 - `next build` (`pnpm build`).
+
+Phase 3 additions:
+
+- `pinned zod@4.6.7` and `server-only` as runtime dependencies.
+- `vitest.config.mts` aliases `server-only` and `next/cache` to no-op stubs in `tests/stubs/` so real service modules can be imported in Node tests. Application builds still use the real modules.
+- `tests/setup.ts` loads `.env.local` for integration tests.
+- Integration tests run against the local container only and are strictly additive (unique `test-` slugs, cleaned up afterwards). They are skipped automatically when `DATABASE_URL` is not a loopback host.
 
 Phase 2 added a **library-only** browser checks layer, not a full E2E framework:
 
@@ -84,7 +100,7 @@ Phase 2 added a **library-only** browser checks layer, not a full E2E framework:
 
 Rationale: Phase 2 has mandatory responsive/accessibility acceptance criteria that a build cannot verify, and the harness browser available to the agent could not emulate viewport widths. `playwright-core` was chosen over `@playwright/test` to avoid adding a second test runner. Screenshots are written to `.qa-screens/`, which is git-ignored.
 
-Planned for later phases: a full E2E runner (`@playwright/test`) for public and admin journeys, one consistent formatter, and Zod wiring for server-side input validation. Zod is not installed in Phase 1; it is added when the first server-validated form exists.
+Planned for later phases: a full E2E runner (`@playwright/test`) for public and admin journeys and one consistent formatter.
 
 Add tooling intentionally and document every script in `package.json`.
 
