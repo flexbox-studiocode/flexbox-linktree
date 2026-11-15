@@ -2,7 +2,6 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 import { findAdminById } from "@/features/auth/repositories/admin-user";
-import { GENERIC_LOGIN_ERROR } from "@/features/auth/schemas/login";
 import { authenticateAdmin } from "@/features/auth/services/authenticate-admin";
 import { isSecureCookieContext, sessionCookieName } from "@/lib/auth/cookies";
 import { resolveSourceIdentifier } from "@/lib/security/client-source";
@@ -159,6 +158,3 @@ export const authOptions: NextAuthOptions = {
   },
   debug: false,
 };
-
-/** Re-exported for the login form so the message cannot drift from the service. */
-export const LOGIN_FAILURE_MESSAGE = GENERIC_LOGIN_ERROR;

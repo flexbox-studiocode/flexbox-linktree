@@ -2,6 +2,13 @@ import Link from "next/link";
 
 import { ResetPasswordForm } from "./reset-password-form";
 
+/**
+ * The token arrives as a query parameter, which is request-time data, so this
+ * page cannot be prerendered into a static shell (`instant = false` documents
+ * the intentional block).
+ */
+export const instant = false;
+
 export default async function ResetPasswordPage({
   searchParams,
 }: {

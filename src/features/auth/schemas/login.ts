@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { adminEmailSchema } from "@/features/auth/schemas/identity";
+import { GENERIC_LOGIN_ERROR } from "@/features/auth/messages";
 
 /**
  * Login form contract.
@@ -11,7 +11,11 @@ import { adminEmailSchema } from "@/features/auth/schemas/identity";
  * administrator accounts.
  */
 export const loginSchema = z.object({
-  email: adminEmailSchema,
+  email: z
+    .string("Email is required.")
+    .trim()
+    .min(1, "Email is required.")
+    .max(254, "Email is too long."),
   password: z
     .string("Password is required.")
     .min(1, "Password is required.")
@@ -21,6 +25,5 @@ export const loginSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>;
 
-/** The single message shown for every rejected sign-in attempt. */
-export const GENERIC_LOGIN_ERROR =
-  "Email atau password tidak valid. Periksa kembali kredensial Anda.";
+/** Re-exported from the client-safe module so server and client copy cannot drift. */
+export { GENERIC_LOGIN_ERROR };
