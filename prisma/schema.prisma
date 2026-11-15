@@ -2,8 +2,11 @@
 // Prisma 7 configuration lives in prisma7.config.ts.
 //
 // Phase 3 (Content Database and CMS Foundation) adds the content domain:
-// categories, links, typed site settings, and media metadata. Admin identity
-// and audit logs belong to Phase 4/5 and are intentionally not modelled here.
+// categories, links, typed site settings, and media metadata.
+//
+// Phase 4 (Authentication and Authorization) adds the admin identity domain:
+// administrator accounts, single-use invitation and password-reset tokens,
+// database-backed login rate limiting, and a security event trail.
 //
 // Several invariants that Prisma cannot express are enforced by CHECK
 // constraints added in `prisma/migrations/<timestamp>_add_content_cms_foundation`:
@@ -137,4 +140,192 @@ model MediaAsset {
 
   @@index([mimeType])
   @@map("media_assets")
+}
+
+// ---------------------------------------------------------------------------
+// Phase 4 — Admin identity and security
+//
+// The initial release has exactly one role (`SUPER_ADMIN`). The enum exists so
+// a later migration can add roles without changing current security
+// assumptions; every authorization check still requires ACTIVE + SUPER_ADMIN.
+//
+// The administrator record here is the authorization source of truth. The
+// Auth.js JWT is only an authentication artifact and is revalidated against
+// `status`, `role`, and `authVersion` on every protected server operation.
+// ---------------------------------------------------------------------------
+
+/// Application role. Only `SUPER_ADMIN` is issued in the initial release.
+enum AdminRole {
+  SUPER_ADMIN
+
+  @@map("admin_role")
+}
+
+/// Administrator account lifecycle state.
+/// INVITED cannot sign in; ACTIVE may when the password matches; SUSPENDED and
+/// DISABLED are rejected everywhere and revoke existing sessions.
+enum AdminAccountStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  DISABLED
+
+  @@map("admin_account_status")
+}
+
+/// Allowlisted Flexbox administrator.
+///
+/// `passwordHash` is null while the account is only INVITED (no usable
+/// credential yet). `authVersion` is the session generation: any password
+/// change, suspension, or reactivation increments it so previously issued JWTs
+/// stop being accepted.
+model AdminUser {
+  id                  String             @id @default(uuid()) @db.Uuid
+  email               String
+  /// Lower-cased, trimmed address used for lookup and uniqueness.
+  normalizedEmail     String             @unique @map("normalized_email")
+  fullName            String             @map("full_name")
+  passwordHash        String?            @map("password_hash")
+  role                AdminRole          @default(SUPER_ADMIN)
+  status              AdminAccountStatus @default(INVITED)
+  emailVerifiedAt     DateTime?          @map("email_verified_at")
+  passwordChangedAt   DateTime?          @map("password_changed_at")
+  lastLoginAt         DateTime?          @map("last_login_at")
+  /// Advisory counter for operations/audit. The authoritative throttle is the
+  /// `admin_rate_limits` table, which survives restarts and is atomic.
+  failedLoginCount    Int                @default(0) @map("failed_login_count")
+  lockedUntil         DateTime?          @map("locked_until")
+  /// Session generation. Included in the JWT and compared on every guard.
+  authVersion         Int                @default(1) @map("auth_version")
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
+
+  invitationsCreated AdminInvitation[]     @relation("InvitationCreator")
+  invitationsAccepted AdminInvitation[]    @relation("InvitationAcceptor")
+  passwordResetTokens PasswordResetToken[]
+  securityEvents     SecurityEvent[]
+
+  /// Guard lookup path: normalized email (unique) and the status/role sweep.
+  @@index([status, role])
+  @@map("admin_users")
+}
+
+/// Single-use invitation for an approved Flexbox member.
+///
+/// Only the SHA-256 hash of the raw token is stored. The raw token is returned
+/// exactly once to the authorized provisioning action; it is never logged.
+model AdminInvitation {
+  id                String    @id @default(uuid()) @db.Uuid
+  email             String
+  normalizedEmail   String    @map("normalized_email")
+  /// SHA-256 of the random invitation token. Unique so a hash collision or a
+  /// double insert fails instead of silently replacing another invitation.
+  tokenHash         String    @unique @map("token_hash")
+  role              AdminRole @default(SUPER_ADMIN)
+  expiresAt         DateTime  @map("expires_at")
+  acceptedAt        DateTime? @map("accepted_at")
+  revokedAt         DateTime? @map("revoked_at")
+  /// Null for the controlled first-admin bootstrap path, which has no creator.
+  createdByAdminId  String?   @map("created_by_admin_id") @db.Uuid
+  acceptedByAdminId String?   @map("accepted_by_admin_id") @db.Uuid
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  createdByAdmin AdminUser? @relation("InvitationCreator", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  acceptedByAdmin AdminUser? @relation("InvitationAcceptor", fields: [acceptedByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([normalizedEmail, acceptedAt, revokedAt])
+  @@index([expiresAt])
+  @@map("admin_invitations")
+}
+
+/// Single-use password reset token. Only the hash is stored.
+model PasswordResetToken {
+  id          String    @id @default(uuid()) @db.Uuid
+  adminUserId String    @map("admin_user_id") @db.Uuid
+  /// SHA-256 of the random reset token.
+  tokenHash   String    @unique @map("token_hash")
+  expiresAt   DateTime  @map("expires_at")
+  usedAt      DateTime? @map("used_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId, usedAt])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
+/// Bucket scope for the database-backed login throttle.
+enum RateLimitScope {
+  ACCOUNT
+  SOURCE
+
+  @@map("rate_limit_scope")
+}
+
+/// Database-backed login throttle shared across processes and restarts.
+///
+/// `keyHash` is never an email address or an IP address:
+///   - ACCOUNT buckets use SHA-256 of the normalized email.
+///   - SOURCE buckets use an HMAC of the client address with a dedicated
+///     server secret, so the raw address cannot be recovered from the table.
+/// Rows are short-lived and removed by `cleanupExpiredRateLimits()`.
+model AdminRateLimit {
+  id              String         @id @default(uuid()) @db.Uuid
+  scope           RateLimitScope
+  keyHash         String         @map("key_hash")
+  attemptCount    Int            @default(0) @map("attempt_count")
+  windowStartedAt DateTime       @map("window_started_at")
+  lockedUntil     DateTime?      @map("locked_until")
+  /// Cleanup horizon; always at or after `lockedUntil`.
+  expiresAt       DateTime       @map("expires_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  @@unique([scope, keyHash])
+  @@index([expiresAt])
+  @@map("admin_rate_limits")
+}
+
+/// Security-relevant event trail.
+///
+/// Deliberately excludes secrets: never store passwords, password hashes,
+/// JWTs, invitation tokens, reset tokens, `AUTH_SECRET`, or database URLs.
+/// `safeMetadata` may only contain non-secret bookkeeping values such as a
+/// reason code, the user agent family, or the affected account email.
+enum SecurityEventType {
+  LOGIN_SUCCEEDED
+  LOGIN_FAILED
+  LOGIN_BLOCKED
+  INVITATION_CREATED
+  INVITATION_REVOKED
+  INVITATION_ACCEPTED
+  ACCOUNT_BOOTSTRAPPED
+  ACCOUNT_ACTIVATED
+  ACCOUNT_SUSPENDED
+  ACCOUNT_DISABLED
+  PASSWORD_CHANGED
+  PASSWORD_RESET_REQUESTED
+  PASSWORD_RESET_COMPLETED
+  SESSION_REVOKED
+  RATE_LIMIT_CLEANUP
+
+  @@map("security_event_type")
+}
+
+model SecurityEvent {
+  id           String            @id @default(uuid()) @db.Uuid
+  adminUserId  String?           @map("admin_user_id") @db.Uuid
+  eventType    SecurityEventType @map("event_type")
+  targetType   String?           @map("target_type")
+  targetId     String?           @map("target_id")
+  safeMetadata Json?             @map("safe_metadata")
+  createdAt    DateTime          @default(now()) @map("created_at")
+
+  adminUser AdminUser? @relation(fields: [adminUserId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([adminUserId, createdAt])
+  @@index([eventType, createdAt])
+  @@map("security_events")
 }
