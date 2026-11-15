@@ -24,12 +24,12 @@ export function SignOutButton() {
 
   return (
     <button
-      className="min-h-11 rounded-xl border border-[var(--line-strong)] px-4 text-sm font-bold text-[var(--ink)] transition hover:bg-[var(--blue-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+      className="min-h-11 rounded-[var(--radius)] border border-[var(--line-strong)] px-4 text-sm font-bold text-[var(--ink)] transition hover:bg-[var(--blue-soft)] disabled:cursor-not-allowed disabled:opacity-60"
       disabled={isPending}
       onClick={handleSignOut}
       type="button"
     >
-      {isPending ? "Keluar…" : "Keluar"}
+      {isPending ? "Keluar..." : "Keluar"}
     </button>
   );
 }

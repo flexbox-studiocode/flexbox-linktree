@@ -1,54 +1,157 @@
 import Link from "next/link";
 
+import { Card, EmptyState, PageHeader, PrimaryLink, Stat, StatusBadge } from "@/components/admin/ui";
+import { getDashboardSummary } from "@/features/admin/services/dashboard";
 import { requireAdmin } from "@/lib/auth/session";
+import { formatBytes, formatJakartaDateTime, toIsoString } from "@/lib/utils/format";
 
-import { SignOutButton } from "./sign-out-button";
-
-/** Phase 4 landing page. CMS CRUD begins in Phase 5. */
-export default async function AdminHomePage() {
+/** CMS dashboard. Every figure is derived from stored data; analytics is Phase 6. */
+export default async function AdminDashboardPage() {
   const admin = await requireAdmin();
+  const summary = await getDashboardSummary();
+  const { content, media, admins, recentLinks, recentEvents, attention } = summary;
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center px-6 py-16 sm:px-10">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">
-          Flexbox Studio · Admin
-        </p>
-        <div className="flex items-center gap-3">
-          <Link
-            className="min-h-11 inline-flex items-center rounded-xl px-3 text-sm font-bold text-[var(--blue-strong)] hover:bg-[var(--blue-soft)]"
-            href="/admin/security"
-          >
-            Keamanan akun
-          </Link>
-          <SignOutButton />
+    <div className="space-y-8">
+      <PageHeader
+        actions={
+          <>
+            <PrimaryLink href="/admin/links/new">Tautan baru</PrimaryLink>
+            <Link
+              className="inline-flex min-h-11 items-center rounded-[var(--radius)] border border-[var(--line-strong)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--ink)] transition hover:bg-[var(--blue-soft)]"
+              href="/admin/settings"
+            >
+              Pengaturan situs
+            </Link>
+          </>
+        }
+        description={`Masuk sebagai ${admin.name}. Ringkasan di bawah berasal dari data yang tersimpan, bukan perkiraan.`}
+        eyebrow="Flexbox Studio · CMS"
+        title="Dasbor"
+      />
+
+      <section aria-labelledby="content-stats">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--muted)]" id="content-stats">
+          Konten
+        </h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <Stat hint={`${content.published} terbit`} label="Total tautan" value={content.links} />
+          <Stat hint="Menunggu peninjauan" label="Konsep" value={content.drafts} />
+          <Stat hint={`${content.inactiveLinks} nonaktif`} label="Diarsipkan" value={content.archived} />
+          <Stat
+            hint={`${content.activeCategories} aktif · ${content.inactiveCategories} nonaktif`}
+            label="Kategori"
+            value={content.categories}
+          />
         </div>
+      </section>
+
+      <section aria-labelledby="ops-stats">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--muted)]" id="ops-stats">
+          Media dan akses
+        </h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <Stat hint={formatBytes(media.totalBytes)} label="Aset media" value={media.total} />
+          <Stat hint={`${admins.superAdmins} Super Admin`} label="Administrator" value={admins.total} />
+          <Stat hint="Dapat masuk sekarang" label="Akun aktif" value={admins.active} />
+          <Stat hint="Belum mengaktifkan akun" label="Undangan" value={admins.invited} />
+        </div>
+      </section>
+
+      {attention.length > 0 ? (
+        <Card>
+          <h2 className="text-base font-semibold text-[var(--ink)]">Perlu perhatian</h2>
+          <ul className="mt-3 space-y-3">
+            {attention.map((item) => (
+              <li key={item.href + item.label} className="text-sm leading-6">
+                <Link className="font-semibold text-[var(--blue-strong)] underline" href={item.href}>
+                  {item.label}
+                </Link>
+                <span className="text-[var(--muted)]"> — {item.detail}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : (
+        <Card>
+          <h2 className="text-base font-semibold text-[var(--ink)]">Perlu perhatian</h2>
+          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+            Tidak ada tautan, kategori, atau undangan yang menunggu tindakan.
+          </p>
+        </Card>
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-base font-semibold text-[var(--ink)]">Tautan terakhir diubah</h2>
+            <Link className="text-sm font-semibold text-[var(--blue-strong)] underline" href="/admin/links">
+              Semua tautan
+            </Link>
+          </div>
+
+          {recentLinks.length === 0 ? (
+            <div className="mt-4">
+              <EmptyState description="Belum ada tautan. Mulai dengan membuat tautan pertama." title="Belum ada tautan" />
+            </div>
+          ) : (
+            <ul className="mt-3 divide-y divide-[var(--line)]">
+              {recentLinks.map((link) => (
+                <li className="flex flex-wrap items-center justify-between gap-2 py-3" key={link.id}>
+                  <div className="min-w-0">
+                    <Link
+                      className="block truncate text-sm font-semibold text-[var(--ink)] hover:underline"
+                      href={`/admin/links/${link.id}`}
+                    >
+                      {link.title}
+                    </Link>
+                    <p className="truncate font-mono text-xs text-[var(--muted)]">{link.slug}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <StatusBadge value={link.status} />
+                    <time className="text-xs text-[var(--muted)]" dateTime={toIsoString(link.updatedAt)}>
+                      {formatJakartaDateTime(link.updatedAt)}
+                    </time>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        <Card>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-base font-semibold text-[var(--ink)]">Aktivitas administratif</h2>
+            <Link className="text-sm font-semibold text-[var(--blue-strong)] underline" href="/admin/audit-logs">
+              Log audit
+            </Link>
+          </div>
+
+          {recentEvents.length === 0 ? (
+            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Belum ada peristiwa tercatat.</p>
+          ) : (
+            <ul className="mt-3 divide-y divide-[var(--line)]">
+              {recentEvents.map((event) => (
+                <li className="py-3" key={event.id}>
+                  <p className="font-mono text-xs font-semibold text-[var(--ink)]">{event.eventType}</p>
+                  <p className="mt-1 text-xs text-[var(--muted)]">
+                    {event.actor ? `${event.actor.fullName} (${event.actor.email})` : "Sistem"} ·{" "}
+                    <time dateTime={toIsoString(event.createdAt)}>{formatJakartaDateTime(event.createdAt)}</time>
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
       </div>
 
-      <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-[var(--ink)] sm:text-6xl">
-        Selamat datang, {admin.name}.
-      </h1>
-      <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--muted)]">
-        Identitas administrator Anda sudah terautentikasi dan terotorisasi. Pengelolaan konten
-        sengaja disiapkan untuk Fase 5.
-      </p>
-
-      <div className="mt-10 rounded-3xl border border-[var(--line)] bg-white p-6 shadow-sm sm:p-8">
-        <dl className="grid gap-5 sm:grid-cols-2">
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
-              Akun
-            </dt>
-            <dd className="mt-2 break-all text-sm font-medium text-[var(--ink)]">{admin.email}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
-              Peran
-            </dt>
-            <dd className="mt-2 text-sm font-medium text-[var(--ink)]">{admin.role}</dd>
-          </div>
-        </dl>
-      </div>
-    </main>
+      <Card>
+        <h2 className="text-base font-semibold text-[var(--ink)]">Analitik</h2>
+        <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+          Pengumpulan kunjungan dan klik tautan belum aktif. Metrik analitik akan muncul di sini setelah Fase 6
+          diimplementasikan dan diverifikasi; tidak ada angka perkiraan yang ditampilkan.
+        </p>
+      </Card>
+    </div>
   );
 }

@@ -1,5 +1,8 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { AdminNav } from "@/components/admin/admin-nav";
+import { SignOutButton } from "@/components/admin/sign-out-button";
 import { requireAdmin } from "@/lib/auth/session";
 
 /**
@@ -16,7 +19,7 @@ import { requireAdmin } from "@/lib/auth/session";
 export const instant = false;
 
 /**
- * Server-side authorization gate for every protected admin page.
+ * Server-side authorization gate and shell for every protected admin page.
  *
  * This layout re-reads the account and checks ACTIVE + SUPER_ADMIN + matching
  * `authVersion`; it does not rely on the optimistic `src/proxy.ts` redirect.
@@ -24,11 +27,52 @@ export const instant = false;
  * `requireSuperAdmin()` themselves: a layout only gates page rendering.
  */
 export default async function ProtectedAdminLayout({ children }: { children: ReactNode }) {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   return (
-    <div className="min-h-screen bg-[var(--color-paper)] text-[var(--color-ink)]">
-      {children}
+    <div className="min-h-screen bg-[var(--page)] text-[var(--ink)]">
+      <a
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-[var(--surface)] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold"
+        href="#admin-content"
+      >
+        Lewati ke konten utama
+      </a>
+
+      <header className="border-b border-[var(--line)] bg-[var(--surface)]">
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
+          <Link className="flex items-baseline gap-2" href="/admin">
+            <span className="text-base font-bold tracking-tight text-[var(--ink)]">Flexbox Studio</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">CMS</span>
+          </Link>
+
+          <div className="flex items-center gap-3">
+            <Link
+              className="hidden min-h-11 items-center rounded-[var(--radius)] px-3 text-sm font-semibold text-[var(--blue-strong)] hover:bg-[var(--blue-soft)] sm:inline-flex"
+              href="/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Lihat situs publik
+            </Link>
+            <span className="hidden text-xs leading-5 text-[var(--muted)] sm:block">
+              {admin.name}
+              <br />
+              {admin.email}
+            </span>
+            <SignOutButton />
+          </div>
+        </div>
+      </header>
+
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row lg:gap-8">
+        <div className="lg:w-52 lg:shrink-0">
+          <AdminNav />
+        </div>
+
+        <main className="min-w-0 flex-1 pb-16" id="admin-content">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
