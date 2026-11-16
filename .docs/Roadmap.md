@@ -164,20 +164,32 @@ Phase 5 status: **complete and verified locally.** The protected CMS includes co
 **Goal:** Collect privacy-conscious events and provide useful reporting.
 
 Tasks:
-- [ ] Finalize event definitions and metric formulas.
-- [ ] Implement page-view and link-click collection.
-- [ ] Implement safe link-ID-based tracking and redirect.
-- [ ] Normalize device, browser, OS, and referrer categories.
-- [ ] Exclude admin activity and known bot traffic where feasible.
-- [ ] Implement date filters and timezone handling.
-- [ ] Build traffic trend charts.
-- [ ] Build per-link click and popularity reports.
-- [ ] Build device, browser, and OS breakdowns.
-- [ ] Build CSV export.
-- [ ] Implement retention and aggregation policy.
-- [ ] Test analytics failure behavior and ensure navigation still works.
+- [x] Finalize event definitions and metric formulas (`.docs/ANALYTICS_SPECIFICATION.md`).
+- [x] Implement page-view and link-click collection.
+- [x] Implement safe link-ID-based tracking and redirect.
+- [x] Normalize device, browser, OS, and referrer categories.
+- [x] Exclude admin activity and known bot traffic where feasible.
+- [x] Implement date filters and timezone handling.
+- [x] Build traffic trend charts.
+- [x] Build per-link click and popularity reports.
+- [x] Build device, browser, and OS breakdowns.
+- [x] Build CSV export.
+- [x] Implement retention and aggregation policy.
+- [x] Test analytics failure behavior and ensure navigation still works.
 
 **Exit criteria:** dashboard metrics have documented definitions and reconcile with event data within expected limitations.
+
+Phase 6 status: **complete and verified locally.** Metric definitions, identifiers, deduplication, and known limitations are documented in `.docs/ANALYTICS_SPECIFICATION.md`; the privacy model is in `.docs/ANALYTICS_PRIVACY.md`; configuration, secret rotation, retention cleanup, reconciliation, health signals, and incident playbooks are in `.docs/ANALYTICS_OPERATIONS.md`. The CMS dashboard (`/admin`) renders the same `getAnalyticsReport()` figures as `/admin/analytics` for the documented default window, and every state — collection disabled, no events in range, or live metrics — is shown explicitly instead of an estimated number. No raw IP address, raw User-Agent, referrer URL, email, token, or fingerprint is stored; tracking failures never block public rendering, and `/go/[linkId]` resolves its destination from PostgreSQL.
+
+Verification record (2026-11-16, Windows host, local PostgreSQL, dev server on `http://localhost:3000`):
+
+- Analytics journey (`.local-storage/qa-analytics-journey.ts`, executed through `src/features/analytics/cli/run.ts`): the dashboard analytics block rendered before and after collection; `/admin/analytics` rendered and accepted the `7d` preset; the public page-view beacon returned `204`; `/go/<linkId>` returned `opaqueredirect` with a server-resolved destination; PostgreSQL recorded `PAGE_VIEW=4` and `LINK_CLICK=1`; the report listed the recorded click. The temporary administrator and temporary link were deleted afterwards; the recorded events remain as local data.
+- `pnpm qa:visual`: 7 viewports (320–1440 px), no horizontal overflow, one `h1`, expected heading and body fonts, `consoleErrors: []`, `failedRequests: []`.
+- `pnpm qa:a11y`: no unnamed links, no contrast failures, no undersized touch targets, one `h1`, complete landmarks, visible focus outlines, every internal anchor resolves, 200% zoom has no overflow or clipped text, reduced motion respected.
+- `pnpm test`: 27 files / 286 tests passed.
+- `pnpm typecheck`, `pnpm lint`, `pnpm build`: passed.
+
+Known limitations are recorded rather than hidden: bot detection is a heuristic, unique visitors are a per-browser estimate, and blocked clients cost an event, not a visit. `pnpm qa:visual` and `pnpm qa:a11y` cover the public page only; the authenticated analytics screens were verified by the journey above. Cache Components logs one dev-only blocking-route diagnostic for protected segments, which is intentional (`instant = false` in `src/app/admin/(protected)/layout.tsx`).
 
 ## Phase 7 — Quality, Security, and Release Readiness
 

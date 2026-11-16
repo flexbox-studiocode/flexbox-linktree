@@ -60,7 +60,11 @@ export function TrendChart({
   const x = (index: number) => (points.length > 1 ? PAD_LEFT + index * step : PAD_LEFT + innerWidth / 2);
   const y = (value: number) => PAD_TOP + innerHeight - (value / max) * innerHeight;
 
-  const gridValues = [0, 0.25, 0.5, 0.75, 1].map((ratio) => Math.round(max * ratio));
+  // Rounded percentages can collapse to the same integer for small maxima, so
+  // the gridlines are de-duplicated before they become React keys.
+  const gridValues = Array.from(
+    new Set([0, 0.25, 0.5, 0.75, 1].map((ratio) => Math.round(max * ratio))),
+  ).sort((left, right) => left - right);
   const labelIndexes = Array.from(new Set([0, Math.floor((points.length - 1) / 2), points.length - 1]));
 
   const label = (value: string) => {

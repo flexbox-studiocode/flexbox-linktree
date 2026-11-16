@@ -7,32 +7,43 @@ import {
 } from "@/features/content/repositories/admin-content";
 import { findRecentAuditEvents, type AuditEventRow } from "@/features/admin/repositories/audit";
 import { getAdminStatusCounts, type AdminStatusCounts } from "@/features/admin/repositories/admin-users";
+import { parseAnalyticsQuery } from "@/features/analytics/schemas/filters";
+import {
+  getAnalyticsReport,
+  type AnalyticsReport,
+} from "@/features/analytics/services/query-analytics";
 import { findMediaPage } from "@/features/media/repository";
 
 /**
  * CMS dashboard summary.
  *
- * Every number is derived from stored data; nothing is estimated. Analytics
- * metrics are deliberately absent because event collection is Phase 6, and a
- * placeholder chart would misrepresent the system state.
+ * Every number is derived from stored data; nothing is estimated. The analytics
+ * block uses the same reporting service as `/admin/analytics` with the documented
+ * default window (last 7 days), so the dashboard and the full report cannot
+ * disagree, and an empty period renders an explicit empty state instead of
+ * fabricated activity.
  */
 
 export type DashboardSummary = {
   content: ContentCounts;
   media: { total: number; totalBytes: number };
   admins: AdminStatusCounts;
+  analytics: AnalyticsReport;
   recentLinks: Awaited<ReturnType<typeof findRecentlyUpdatedLinks>>;
   recentEvents: AuditEventRow[];
   attention: { label: string; detail: string; href: string }[];
 };
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {
-  const [content, media, admins, recentLinks, recentEvents] = await Promise.all([
+  const [content, media, admins, recentLinks, recentEvents, analytics] = await Promise.all([
     getContentCounts(),
     findMediaPage({ skip: 0, take: 1 }),
     getAdminStatusCounts(),
     findRecentlyUpdatedLinks(5),
     findRecentAuditEvents(6),
+    // `parseAnalyticsQuery({})` resolves the documented default: the current
+    // Jakarta week window (today plus the six preceding days), daily buckets.
+    getAnalyticsReport(parseAnalyticsQuery({})),
   ]);
 
   const attention: DashboardSummary["attention"] = [];
@@ -65,6 +76,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     content,
     media: { total: media.total, totalBytes: media.totalBytes },
     admins,
+    analytics,
     recentLinks,
     recentEvents,
     attention,
