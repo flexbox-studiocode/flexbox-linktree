@@ -248,8 +248,8 @@ Potential follow-up work, only after observing real usage:
 | Phase 2 — Public User Page | Complete |
 | Phase 3 — Content Database and CMS Foundation | Complete |
 | Phase 4 — Authentication and Authorization | Complete |
-| Phase 5 — Full CMS | Not started |
-| Phase 6 — Advanced Analytics | Not started |
+| Phase 5 — Full CMS | Complete |
+| Phase 6 — Advanced Analytics | Complete |
 | Phase 7 — Quality, Security, and Release Readiness | Not started |
 | Phase 8 — VPS Deployment and Production | Not started |
 
