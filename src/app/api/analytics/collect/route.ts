@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { collectPageView } from "@/features/analytics/services/collect-events";
 import { allowCollectorRequest } from "@/features/analytics/services/collector-rate-limit";
+import { isSameOriginCollectorRequest, readCollectorBody } from "@/features/analytics/services/collector-request";
 import { isAcceptedContentType, parseEventBody } from "@/features/analytics/schemas/event";
 import { serializeAnalyticsCookie } from "@/features/analytics/services/session-identity";
 
@@ -23,17 +24,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return new NextResponse(null, { status: 204 });
   }
 
+  if (
+    !isSameOriginCollectorRequest({
+      origin: request.headers.get("origin"),
+      secFetchSite: request.headers.get("sec-fetch-site"),
+      requestUrl: request.url,
+      configuredOrigin: process.env.NEXTAUTH_URL ?? null,
+    })
+  ) {
+    return new NextResponse(null, { status: 204 });
+  }
+
   const source = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "global";
 
   if (!allowCollectorRequest(source)) {
     return new NextResponse(null, { status: 204 });
   }
 
-  let body = "";
+  const body = await readCollectorBody(request.body, request.headers.get("content-length"));
 
-  try {
-    body = await request.text();
-  } catch {
+  if (body === null) {
     return new NextResponse(null, { status: 204 });
   }
 

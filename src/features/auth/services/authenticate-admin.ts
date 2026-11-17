@@ -5,7 +5,7 @@ import { loginSchema } from "@/features/auth/schemas/login";
 import { normalizeEmail } from "@/features/auth/schemas/identity";
 import { checkLoginAllowed, recordFailedLogin, resetLoginThrottle, sourceBucketKey } from "@/features/auth/services/rate-limit";
 import { recordSecurityEvent } from "@/features/auth/services/security-event";
-import { hashPassword, needsRehash, verifyPassword } from "@/lib/security/password";
+import { hashPassword, needsRehash, verifyPassword, DUMMY_PASSWORD_HASH } from "@/lib/security/password";
 
 /** Credential-verification result. `null` deliberately covers every failure. */
 export type AuthenticatedAdmin = {
@@ -51,10 +51,12 @@ export async function authenticateAdmin(input: AuthenticateAdminInput): Promise<
   }
 
   const admin = await findAdminWithPasswordHash(normalizedEmail);
+  // Always run one Argon2id verification, even when the account is unknown or
+  // inactive, so response timing does not distinguish "no such account" from
+  // "wrong password".
+  const passwordMatches = await verifyPassword(admin?.passwordHash ?? DUMMY_PASSWORD_HASH, password);
   const valid =
-    admin?.status === "ACTIVE" &&
-    admin.role === "SUPER_ADMIN" &&
-    (await verifyPassword(admin.passwordHash, password));
+    admin?.status === "ACTIVE" && admin.role === "SUPER_ADMIN" && passwordMatches;
 
   if (!valid || !admin) {
     const failure = await recordFailedLogin({ normalizedEmail, sourceBucketKey: sourceKey, now: input.now });

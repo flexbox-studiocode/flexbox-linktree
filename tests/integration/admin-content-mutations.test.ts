@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import {
   ContentAdminError,
@@ -7,11 +7,21 @@ import {
   deleteCategory,
   reassignAndDeleteCategory,
   reorderLink,
+  setLinkFeatured,
   transitionLinkStatus,
   updateLink,
 } from "@/features/content/services/admin-content";
 import { findPublicCategories } from "@/features/content/repositories/content";
 import { openLocalDatabase, testSlug, type LocalDatabase } from "../helpers/db";
+
+const cacheCalls = vi.hoisted(() => ({ updateTag: [] as string[], revalidatePath: [] as string[] }));
+
+vi.mock("next/cache", () => ({
+  updateTag: (tag: string) => cacheCalls.updateTag.push(tag),
+  revalidatePath: (path: string) => cacheCalls.revalidatePath.push(path),
+  cacheLife: () => undefined,
+  cacheTag: () => undefined,
+}));
 
 /**
  * CMS content mutation integration tests.
@@ -194,6 +204,29 @@ describe.skipIf(!db)("CMS content mutations (local database)", () => {
     expect(events.map((event) => event.eventType)).toEqual(
       expect.arrayContaining(["LINK_CREATED", "LINK_UPDATED"]),
     );
+  });
+
+  it("toggles featured state, records an audit event, and invalidates public content", async () => {
+    const category = await makeCategory();
+    const link = await makeLink(category.id);
+
+    cacheCalls.updateTag.length = 0;
+    cacheCalls.revalidatePath.length = 0;
+
+    const updated = await setLinkFeatured({ actor, linkId: link.id, isFeatured: true });
+    expect(updated.isFeatured).toBe(true);
+
+    const row = await prisma.link.findUniqueOrThrow({ where: { id: link.id } });
+    expect(row.isFeatured).toBe(true);
+
+    expect(cacheCalls.updateTag).toContain("public-content");
+    expect(cacheCalls.revalidatePath).toContain("/");
+
+    const events = await prisma.securityEvent.findMany({
+      where: { targetId: link.id, adminUserId: actor.adminId, eventType: "LINK_UPDATED" },
+      select: { id: true },
+    });
+    expect(events.length).toBeGreaterThan(0);
   });
 
   it("swaps the sort order with the neighbouring link", async () => {

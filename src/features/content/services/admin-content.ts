@@ -395,6 +395,8 @@ export async function setLinkFeatured(input: {
     },
   });
 
+  invalidatePublicContent();
+
   return updated;
 }
 

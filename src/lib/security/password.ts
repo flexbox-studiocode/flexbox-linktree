@@ -45,6 +45,15 @@ export const ARGON2ID_PARAMETERS: Argon2idParameters = {
 export type PasswordHashOptions = Partial<Argon2idParameters>;
 
 /**
+ * Precomputed Argon2id hash of an unrelated sentinel string, never a real
+ * password. Credential verification runs against this value when no account
+ * matches, so an unknown email costs the same verification time as a known one
+ * and account existence is not observable through response timing.
+ */
+export const DUMMY_PASSWORD_HASH =
+  "$argon2id$v=19$m=19456,t=2,p=1$dcW4RNc0YsQ17jbZ4GvA6g$ZZ2pGQEIm3EVox4n0fja+5w1c94JNL9MgiX1wycKixE";
+
+/**
  * Returns a human-readable reason when a candidate password is unacceptable,
  * or `null` when it passes the administrator password policy.
  *
