@@ -11,7 +11,7 @@ The public experience is deliberately a microsite, not an application dashboard.
 
 ## Status
 
-**Phase 6 — Advanced Analytics** is complete. Phase 7 (Quality, Security, and Release Readiness) is in progress. An authorized Flexbox Super Admin can manage categories, links, site settings, the media library, and administrator accounts from a protected CMS, with audit logging and system status, without source-code changes. Privacy-conscious page-view and link-click analytics are collected and reported at `/admin/analytics`. Phases 4 (authentication and authorization), 3 (database-backed content), 2 (public microsite), and 1 (local environment) remain in place.
+**Phase 7 — Quality, Security, and Release Readiness** is complete with the decision **READY WITH DOCUMENTED LIMITATIONS** (`.docs/RELEASE_READINESS.md`). Phase 8 (VPS deployment and production) is next. An authorized Flexbox Super Admin can manage categories, links, site settings, the media library, and administrator accounts from a protected CMS, with audit logging and system status, without source-code changes. Privacy-conscious page-view and link-click analytics are collected and reported at `/admin/analytics`. Phases 6 (analytics), 5 (full CMS), 4 (authentication and authorization), 3 (database-backed content), 2 (public microsite), and 1 (local environment) remain in place.
 
 Implemented at this point:
 
@@ -127,9 +127,12 @@ Full Windows instructions, environment-variable rules, database commands, reset 
 | `.docs/ANALYTICS_OPERATIONS.md` | Analytics reconciliation, retention, health signals, and operations runbook. |
 | `.docs/PHASE_7_BASELINE.md` | Phase 7 starting state, checks, dependency audit, and release risks. |
 | `.docs/PHASE_7_TRACEABILITY.md` | Requirements matrix and Phase 7 discrepancy register. |
+| `.docs/DEPENDENCY_SECURITY.md` | Dependency policy, audit result, and supply-chain controls. |
+| `.docs/SECURITY_REVIEW.md` | Threat boundaries, hardening applied, verification, and residual risks. |
 | `.docs/DATABASE_BACKUP_RECOVERY.md` | PostgreSQL backup, isolated restore verification, and incident recovery runbook. |
 | `.docs/QA_TEST_REPORT.md` | Executed test, journey, performance, accessibility, and visual evidence. |
 | `.docs/PRODUCTION_CONFIGURATION.md` | Required production settings, safe preflight, and known launch blockers. |
+| `.docs/RELEASE_READINESS.md` | Phase 7 decision, evidence, accepted limitations, and Phase 8 handoff. |
 | `.docs/LOCAL_DEVELOPMENT.md` | Repeatable local Windows setup. |
 | `.docs/Desain.md` | Visual design authority for the public microsite (kept in its original Indonesian form). |
 | `AGENTS.md` | Operative rules for contributors and coding assistants. |

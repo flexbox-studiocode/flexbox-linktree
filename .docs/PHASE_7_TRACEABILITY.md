@@ -48,13 +48,13 @@ missing and tracked as Phase 7 work.
 | P6-9 | Retention cleanup | `services/retention.ts`, CLI | Retention tests; dry-run executed in Milestone F | Verified |
 | P6-10 | Analytics failure never blocks navigation | Best-effort collection in `/go`, beacon failure swallowed | Failure-injection review in Milestone F | Verified |
 | P7-1 | Release baseline documented | `.docs/PHASE_7_BASELINE.md` | This audit | Verified |
-| P7-2 | CI with ephemeral PostgreSQL | `.github/workflows/ci.yml` | GitHub Actions run recorded in `.docs/RELEASE_READINESS.md` | See release gate |
-| P7-3 | Dependency and secret audit | `.docs/DEPENDENCY_SECURITY.md` | `pnpm audit`, `pnpm outdated`, tracked-file secret scan | Verified |
+| P7-2 | CI with ephemeral PostgreSQL | `.github/workflows/ci.yml` | GitHub Actions run 7 on `8994021`: success (both jobs) | Verified |
+| P7-3 | Dependency and secret audit | `.docs/DEPENDENCY_SECURITY.md` | `pnpm audit`, `pnpm outdated`, `node scripts/secret-scan.mjs` | Verified |
 | P7-4 | Application security review | `.docs/SECURITY_REVIEW.md` | Source review plus HTTP probes/tests | Verified |
 | P7-5 | Backup and isolated restore | `.docs/DATABASE_BACKUP_RECOVERY.md`, scripts | Isolated restore drill executed | Verified |
 | P7-6 | Integration/E2E/performance/reconciliation | `.docs/QA_TEST_REPORT.md` | Commands and measured output recorded | Verified with documented gaps |
 | P7-7 | A11y, visual QA, SEO, production config | `.docs/PRODUCTION_CONFIGURATION.md` | `qa:a11y`, `qa:visual`, production config CLI | Verified with owner-input limitations |
-| P7-8 | Release readiness decision and Phase 8 handoff | `.docs/RELEASE_READINESS.md` | Evidence-based decision | Verified |
+| P7-8 | Release readiness decision and Phase 8 handoff | `.docs/RELEASE_READINESS.md` | Evidence-based decision: READY WITH DOCUMENTED LIMITATIONS | Verified |
 
 ## Discrepancies and corrections applied during Phase 7
 

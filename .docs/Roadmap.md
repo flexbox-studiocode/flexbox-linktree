@@ -196,17 +196,19 @@ Known limitations are recorded rather than hidden: bot detection is a heuristic,
 **Goal:** Verify operational and security requirements.
 
 Tasks:
-- [ ] Unit and integration tests for content, auth, settings, analytics, and permissions.
-- [ ] End-to-end tests for public and admin journeys.
-- [ ] Test input validation, XSS, CSRF, open redirects, brute-force protection, and upload validation.
-- [ ] Test backup and database restore.
-- [ ] Test media restore or object-storage recovery.
-- [ ] Review secrets, environment variables, logs, and production headers.
-- [ ] Verify responsive layout and accessibility.
-- [ ] Load-test representative page and analytics endpoints.
-- [ ] Document release and rollback procedures.
+- [x] Unit and integration tests for content, auth, settings, analytics, and permissions — 28 files / 303 tests.
+- [x] End-to-end tests for public and admin journeys — public journey automated (`pnpm qa:e2e`); admin journey verified manually, automation deferred because no test credential is provisioned.
+- [x] Test input validation, XSS, CSRF, open redirects, brute-force protection, and upload validation — covered by unit/integration tests plus `SECURITY_REVIEW.md`.
+- [x] Test backup and database restore — `pnpm db:backup` + `pnpm db:restore:verify`, executed.
+- [ ] Test media restore or object-storage recovery — blocked: S3 is configured in Phase 8.
+- [x] Review secrets, environment variables, logs, and production headers — headers probed live; secret scan clean; `pnpm config:check` added.
+- [x] Verify responsive layout and accessibility — 7 viewports, zoom, contrast, anchors, reduced motion.
+- [x] Load-test representative page and analytics endpoints — 100-request loopback smoke baseline; repeat on staging.
+- [x] Document release and rollback procedures — `PRODUCTION_CONFIGURATION.md`, `DATABASE_BACKUP_RECOVERY.md`.
 
 **Exit criteria:** all critical acceptance checks pass and known limitations are documented.
+
+**Status: complete — READY WITH DOCUMENTED LIMITATIONS.** See `.docs/RELEASE_READINESS.md`.
 
 ## Phase 8 — VPS Deployment and Production
 
@@ -250,7 +252,7 @@ Potential follow-up work, only after observing real usage:
 | Phase 4 — Authentication and Authorization | Complete |
 | Phase 5 — Full CMS | Complete |
 | Phase 6 — Advanced Analytics | Complete |
-| Phase 7 — Quality, Security, and Release Readiness | Not started |
+| Phase 7 — Quality, Security, and Release Readiness | Complete — READY WITH DOCUMENTED LIMITATIONS |
 | Phase 8 — VPS Deployment and Production | Not started |
 
 ## Release Gates
