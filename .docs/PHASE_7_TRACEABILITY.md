@@ -68,4 +68,5 @@ missing and tracked as Phase 7 work.
 | No HTTP security headers were configured | CSP, HSTS (HTTPS only), nosniff, referrer, permissions, frame and private cache headers added in Milestone D |
 | System status claimed socket address was used for source buckets when proxy headers were distrusted | Corrected wording and added analytics/site-config checks in Milestone G |
 | No production-configuration preflight | `pnpm config:check` added in Milestone G |
+| System status lacked analytics, actual site settings, and precise proxy-throttle state | Added operational checks and corrected wording in Milestone G |
 | No automated CI, backup scripts, performance baseline, or E2E journey | Added in Milestones B, E, F |

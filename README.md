@@ -129,6 +129,7 @@ Full Windows instructions, environment-variable rules, database commands, reset 
 | `.docs/PHASE_7_TRACEABILITY.md` | Requirements matrix and Phase 7 discrepancy register. |
 | `.docs/DATABASE_BACKUP_RECOVERY.md` | PostgreSQL backup, isolated restore verification, and incident recovery runbook. |
 | `.docs/QA_TEST_REPORT.md` | Executed test, journey, performance, accessibility, and visual evidence. |
+| `.docs/PRODUCTION_CONFIGURATION.md` | Required production settings, safe preflight, and known launch blockers. |
 | `.docs/LOCAL_DEVELOPMENT.md` | Repeatable local Windows setup. |
 | `.docs/Desain.md` | Visual design authority for the public microsite (kept in its original Indonesian form). |
 | `AGENTS.md` | Operative rules for contributors and coding assistants. |
@@ -149,6 +150,7 @@ Brand assets live in `.flexbox/` (source) and `public/assets/` (web-ready copies
 | `pnpm qa:a11y` | Accessibility, contrast, zoom, anchor, and reduced-motion checks (needs the app server). |
 | `pnpm qa:e2e` | Release journey in Chrome: public page, redirect safety, admin gate, headers, collector (needs the app server). |
 | `pnpm perf:smoke` | Concurrent public-page and analytics-collector latency smoke (needs the app server). |
+| `pnpm config:check` | Validate local or supplied environment configuration; use `--production` before release. |
 | `pnpm db:generate` | Generate Prisma Client. |
 | `pnpm db:validate` | Validate the Prisma schema. |
 | `pnpm db:migrate` | Create/apply a development migration (local database only). |

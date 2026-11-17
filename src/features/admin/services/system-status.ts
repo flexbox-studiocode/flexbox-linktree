@@ -103,9 +103,61 @@ export async function getSystemStatus(): Promise<SystemStatus> {
     label: "Header proxy",
     state: trustedProxy ? "warning" : "ok",
     detail: trustedProxy
-      ? "TRUST_PROXY_HEADERS=true: pastikan proxy menimpa x-forwarded-for."
-      : "Header forwarded tidak dipercaya; alamat socket dipakai untuk bucket sumber.",
+      ? "TRUST_PROXY_HEADERS=true: alamat klien diambil dari header forwarded; aktifkan hanya di belakang proxy Anda sendiri yang menimpa nilainya."
+      : "Header forwarded tidak dipercaya; bucket sumber dinonaktifkan dan throttle hanya berjalan per akun.",
   });
+
+  const analyticsSecret =
+    process.env.ANALYTICS_HASH_SECRET ?? process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET ?? null;
+  const rawRetentionDays = Number(process.env.ANALYTICS_RAW_RETENTION_DAYS ?? "90");
+  const aggregateRetentionDays = Number(process.env.ANALYTICS_AGGREGATE_RETENTION_DAYS ?? "400");
+  const retentionValid =
+    Number.isInteger(rawRetentionDays) &&
+    rawRetentionDays > 0 &&
+    Number.isInteger(aggregateRetentionDays) &&
+    aggregateRetentionDays > 0;
+
+  checks.push({
+    label: "Analitik",
+    state: analyticsSecret ? (retentionValid ? "ok" : "warning") : "warning",
+    detail: analyticsSecret
+      ? retentionValid
+        ? "Kolektor aktif; retensi mentah " +
+          rawRetentionDays +
+          " hari dan agregat " +
+          aggregateRetentionDays +
+          " hari."
+        : "Kolektor aktif, tetapi ANALYTICS_*_RETENTION_DAYS tidak berupa angka bulat positif; nilai bawaan 90/400 hari dipakai."
+      : "ANALYTICS_HASH_SECRET tidak diset; kolektor tidak merekam apa pun, halaman publik tetap berfungsi.",
+  });
+
+  if (databaseReady) {
+    let siteConfigured = false;
+    let siteDetail = "Pengaturan situs belum tersedia.";
+
+    try {
+      const settings = await prisma.siteSetting.findMany({
+        where: { key: { in: ["general", "hero"] } },
+        select: { key: true, value: true },
+      });
+      const general = settings.find((entry) => entry.key === "general")?.value as { name?: unknown } | undefined;
+      const hero = settings.find((entry) => entry.key === "hero")?.value as { heroTitle?: unknown } | undefined;
+      const name = typeof general?.name === "string" ? general.name.trim() : "";
+      const title = typeof hero?.heroTitle === "string" ? hero.heroTitle.trim() : "";
+      siteConfigured = name.length > 0 && title.length > 0;
+      siteDetail = siteConfigured
+        ? `Identitas situs terbaca: ${name}.`
+        : "Pengaturan general.name atau hero.heroTitle belum diisi; lengkapi melalui /admin/settings.";
+    } catch {
+      siteDetail = "Tidak dapat membaca pengaturan situs; periksa koneksi basis data.";
+    }
+
+    checks.push({
+      label: "Konfigurasi situs",
+      state: siteConfigured ? "ok" : databaseReady ? "warning" : "error",
+      detail: siteDetail,
+    });
+  }
 
   const mailTransport = process.env.ADMIN_MAIL_TRANSPORT ?? (process.env.NODE_ENV === "production" ? "" : "file");
   checks.push({
