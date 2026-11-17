@@ -12,6 +12,8 @@
     "test:watch": "vitest",
     "qa:visual": "node scripts/visual-qa.mjs",
     "qa:a11y": "node scripts/a11y-audit.mjs && node scripts/a11y-interaction.mjs",
+    "qa:e2e": "node scripts/e2e-release.mjs",
+    "perf:smoke": "node scripts/perf-smoke.mjs",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
     "db:migrate": "prisma migrate dev",
