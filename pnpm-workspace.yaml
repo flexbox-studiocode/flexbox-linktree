@@ -7,3 +7,9 @@ allowBuilds:
   prisma: true
   sharp: false
   unrs-resolver: false
+
+# Force patched transitive versions where a parent package still pins a
+# vulnerable range. Dev-only lint tooling pulls minimatch <11.0.1
+# (GHSA-g3hv-75wg-m249); 11.0.1 keeps the same API for our usage.
+overrides:
+  "minimatch@<11.0.1": 11.0.1
