@@ -11,7 +11,7 @@ The public experience is deliberately a microsite, not an application dashboard.
 
 ## Status
 
-**Phase 5 — Full CMS** is complete: an authorized Flexbox Super Admin can manage categories, links, site settings, the media library, and administrator accounts from a protected CMS, with audit logging and system status, without source-code changes. Phase 4 (authentication and authorization), Phase 3 (database-backed content), Phase 2 (public microsite), and Phase 1 (local environment) remain in place.
+**Phase 6 — Advanced Analytics** is complete. Phase 7 (Quality, Security, and Release Readiness) is in progress. An authorized Flexbox Super Admin can manage categories, links, site settings, the media library, and administrator accounts from a protected CMS, with audit logging and system status, without source-code changes. Privacy-conscious page-view and link-click analytics are collected and reported at `/admin/analytics`. Phases 4 (authentication and authorization), 3 (database-backed content), 2 (public microsite), and 1 (local environment) remain in place.
 
 Implemented at this point:
 
@@ -28,6 +28,7 @@ Implemented at this point:
 - Administrator management that reuses the Phase 4 provisioning and lifecycle services, with self-lockout and last-active-admin protection; invitation tokens are shown once for private delivery.
 - Audit trail: authentication and CMS content events share the append-only `security_events` table and are readable at `/admin/audit-logs`.
 - Public cache invalidation on CMS mutation through the `public-content` tag and the `/` path.
+- Privacy-conscious analytics: first-party collector at `/api/analytics/collect` (204-always, device/browser/OS/referrer normalization, no raw IPs), admin dashboard at `/admin/analytics` with range and dimension views, CSV export with formula neutralization, and a 90-day retention CLI (`pnpm analytics:cleanup`).
 - Internal provisioning only: bootstrap, invitation, invitation acceptance, status, and cleanup CLIs. No public registration.
 - Server-side authorization for protected pages, Server Actions, and data services, with immediate revocation through `authVersion`.
 - Sign-out, signed-in password change, forgot-password, and reset-password flows; the development mail transport writes to `.local-storage/mail/` and refuses to run in production.
@@ -39,7 +40,6 @@ Implemented at this point:
 
 Not implemented yet (later roadmap phases):
 
-- Analytics collection and reporting (Phase 6).
 - Multi-factor authentication and a production transactional mail provider.
 - Production deployment, Coolify, and staging infrastructure (Phase 8).
 
@@ -122,6 +122,11 @@ Full Windows instructions, environment-variable rules, database commands, reset 
 | `.docs/AUTH_SECURITY.md` | Authentication model, authorization boundary, provisioning, recovery, threat model, and verification record. |
 | `.docs/ADMIN_CMS.md` | CMS screens, authorization requirements, content workflow, media rules, and verification record. |
 | `.docs/PUBLIC_PAGE.md` | Public page sections, content model, destination policy, and QA commands. |
+| `.docs/ANALYTICS_SPECIFICATION.md` | Analytics event model, aggregation, reporting, and access-control scope. |
+| `.docs/ANALYTICS_PRIVACY.md` | Privacy model, data minimization, retention, and visitor-facing disclosure requirements. |
+| `.docs/ANALYTICS_OPERATIONS.md` | Analytics reconciliation, retention, health signals, and operations runbook. |
+| `.docs/PHASE_7_BASELINE.md` | Phase 7 starting state, checks, dependency audit, and release risks. |
+| `.docs/PHASE_7_TRACEABILITY.md` | Requirements matrix and Phase 7 discrepancy register. |
 | `.docs/LOCAL_DEVELOPMENT.md` | Repeatable local Windows setup. |
 | `.docs/Desain.md` | Visual design authority for the public microsite (kept in its original Indonesian form). |
 | `AGENTS.md` | Operative rules for contributors and coding assistants. |
@@ -152,6 +157,7 @@ Brand assets live in `.flexbox/` (source) and `public/assets/` (web-ready copies
 | `pnpm admin:accept-invite` | Activate an invited account with a password from stdin. |
 | `pnpm admin:set-status` | Suspend, disable, or reactivate an administrator account. |
 | `pnpm admin:cleanup` | Delete expired reset tokens and stale throttle rows. |
+| `pnpm analytics:cleanup` | Delete analytics raw events older than the retention window. |
 
 ## Security Notes
 
