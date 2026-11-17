@@ -14,6 +14,7 @@ export default defineConfig({
     },
   },
   test: {
+    maxWorkers: 4,
     environment: "node",
     include: ["tests/**/*.test.ts"],
     setupFiles: ["tests/setup.ts"],

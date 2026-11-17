@@ -34,7 +34,7 @@ export function openLocalDatabase(): LocalDatabase | null {
     return null;
   }
 
-  const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
+  const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString, max: 3 }) });
 
   return {
     prisma,
