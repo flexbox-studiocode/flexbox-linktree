@@ -127,6 +127,7 @@ Full Windows instructions, environment-variable rules, database commands, reset 
 | `.docs/ANALYTICS_OPERATIONS.md` | Analytics reconciliation, retention, health signals, and operations runbook. |
 | `.docs/PHASE_7_BASELINE.md` | Phase 7 starting state, checks, dependency audit, and release risks. |
 | `.docs/PHASE_7_TRACEABILITY.md` | Requirements matrix and Phase 7 discrepancy register. |
+| `.docs/DATABASE_BACKUP_RECOVERY.md` | PostgreSQL backup, isolated restore verification, and incident recovery runbook. |
 | `.docs/LOCAL_DEVELOPMENT.md` | Repeatable local Windows setup. |
 | `.docs/Desain.md` | Visual design authority for the public microsite (kept in its original Indonesian form). |
 | `AGENTS.md` | Operative rules for contributors and coding assistants. |
@@ -152,6 +153,8 @@ Brand assets live in `.flexbox/` (source) and `public/assets/` (web-ready copies
 | `pnpm db:seed` | Upsert the development content dataset (idempotent). |
 | `pnpm db:studio` | Open Prisma Studio. |
 | `pnpm db:check` | Run the local Prisma connectivity check. |
+| `pnpm db:backup` | Create a local custom-format PostgreSQL backup with SHA-256 sidecar. |
+| `pnpm db:restore:verify` | Restore newest backup to isolated PostgreSQL and compare tables, row counts, and migration ledger. |
 | `pnpm admin:bootstrap` | Create the first Super Admin (requires `ADMIN_BOOTSTRAP_ENABLED=true`). |
 | `pnpm admin:invite` | Issue a single-use invitation for an approved member. |
 | `pnpm admin:accept-invite` | Activate an invited account with a password from stdin. |

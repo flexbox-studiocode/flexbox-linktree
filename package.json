@@ -19,6 +19,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:check": "tsx prisma/check.ts",
+    "db:backup": "node scripts/db-backup.mjs",
+    "db:restore:verify": "node scripts/db-restore-verify.mjs",
     "admin:bootstrap": "tsx --env-file=.env.local src/features/auth/cli/run.ts bootstrap.ts",
     "admin:invite": "tsx --env-file=.env.local src/features/auth/cli/run.ts invite.ts",
     "admin:accept-invite": "tsx --env-file=.env.local src/features/auth/cli/run.ts accept-invitation.ts",
