@@ -48,7 +48,7 @@ missing and tracked as Phase 7 work.
 | P6-9 | Retention cleanup | `services/retention.ts`, CLI | Retention tests; dry-run executed in Milestone F | Verified |
 | P6-10 | Analytics failure never blocks navigation | Best-effort collection in `/go`, beacon failure swallowed | Failure-injection review in Milestone F | Verified |
 | P7-1 | Release baseline documented | `.docs/PHASE_7_BASELINE.md` | This audit | Verified |
-| P7-2 | CI with ephemeral PostgreSQL | `.github/workflows/ci.yml` | GitHub Actions run 7 on `8994021`: success (both jobs) | Verified |
+| P7-2 | CI with ephemeral PostgreSQL | `.github/workflows/ci.yml` | GitHub Actions run 9 on `b992eea`: success (both jobs) | Verified |
 | P7-3 | Dependency and secret audit | `.docs/DEPENDENCY_SECURITY.md` | `pnpm audit`, `pnpm outdated`, `node scripts/secret-scan.mjs` | Verified |
 | P7-4 | Application security review | `.docs/SECURITY_REVIEW.md` | Source review plus HTTP probes/tests | Verified |
 | P7-5 | Backup and isolated restore | `.docs/DATABASE_BACKUP_RECOVERY.md`, scripts | Isolated restore drill executed | Verified |

@@ -21,8 +21,8 @@ items remain open and are listed in §6. None of them is an application defect.
 | Item | Value |
 |---|---|
 | Branch | `main` |
-| Milestone commits | A `64db763`, B `385ef83`, C `3debc93`, D `5bf651c`, E `94dd75c`, F `0dcd308`, G `21fa72b`, CI fix `8994021` |
-| CI | Run 7 on `8994021`: **success** (both jobs) |
+| Milestone commits | A `64db763`, B `385ef83`, C `3debc93`, D `5bf651c`, E `94dd75c`, F `0dcd308`, G `21fa72b`, H `306eb2c`, CI stabilization `8994021`, `b992eea` |
+| CI | Run 9 on `b992eea`: **success** (both jobs) |
 | Remote | `https://github.com/flexbox-studiocode/flexbox-linktree.git` |
 | Migrations | 10 applied, none pending |
 | Schema change this phase | None |
