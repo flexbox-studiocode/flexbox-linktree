@@ -40,3 +40,10 @@ Status: **NOT YET DEPLOYED**
 - No swap configured.
 - Capacity is reasonable for a small private PostgreSQL 17 resource plus the
   application, but memory monitoring and disk alerts are required.
+
+## Current revalidation
+
+- DNS propagation was rechecked after the previous audit; both public resolvers
+  now return the approved apex and WWW records.
+- The SOA remains unchanged and still contains the invalid-looking provider
+  hostname noted above.

@@ -59,3 +59,8 @@ MEDIA_ALLOW_LOCAL_IN_PRODUCTION=true
 
 No existing media was moved or deleted. Upload validation and traversal
 protection were already verified by the code test suite.
+
+The directory's read, write, and execute access checks passed for the current
+root operator. A container write/read test is pending until Coolify supplies the
+application container and runtime UID/GID; no temporary user file was left
+behind by this audit.
