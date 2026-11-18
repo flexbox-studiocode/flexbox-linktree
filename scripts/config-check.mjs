@@ -11,7 +11,7 @@
  * Secret values are never printed; only names, lengths, and categories.
  */
 import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { isAbsolute, resolve } from "node:path";
 
 const args = process.argv.slice(2);
 const forcedProduction = args.includes("--production");
@@ -160,6 +160,7 @@ if (rateLimitSecret && (rateLimitSecret === nextAuthSecret || rateLimitSecret ==
 
 // 4. Canonical URL
 const nextAuthUrl = present("NEXTAUTH_URL");
+const expectedProductionOrigin = "https://flexbox-microsite.web.id";
 
 if (!nextAuthUrl) {
   error("NEXTAUTH_URL", "missing; recovery links and secure cookie prefixes cannot be derived");
@@ -169,6 +170,8 @@ if (!nextAuthUrl) {
 
     if (production && parsed.protocol !== "https:") {
       error("NEXTAUTH_URL", "production must use https");
+    } else if (production && parsed.origin !== expectedProductionOrigin) {
+      error("NEXTAUTH_URL", `production must use ${expectedProductionOrigin}`);
     } else if (parsed.pathname !== "/" || parsed.search || parsed.hash) {
       warn("NEXTAUTH_URL", "should be the bare origin without path, query, or fragment");
     } else {
@@ -222,26 +225,38 @@ for (const [name, minimum, maximum] of [
 const mediaDriver = present("MEDIA_STORAGE_DRIVER") ?? (production ? "s3" : "local");
 
 if (production) {
-  if (mediaDriver !== "s3") {
-    error("MEDIA_STORAGE_DRIVER", "production must use s3 so media survives an ephemeral container");
+  if (mediaDriver === "local") {
+    const localRoot = present("MEDIA_LOCAL_ROOT");
+
+    if (process.env.MEDIA_ALLOW_LOCAL_IN_PRODUCTION !== "true") {
+      error("MEDIA_ALLOW_LOCAL_IN_PRODUCTION", "must be true only when Coolify mounts a persistent production media volume");
+    } else if (!localRoot || !isAbsolute(localRoot)) {
+      error("MEDIA_LOCAL_ROOT", "production local media storage requires an absolute path such as /data/flexbox/media");
+    } else {
+      ok("MEDIA_STORAGE_DRIVER", `local persistent (${resolve(localRoot)})`);
+    }
+  } else if (mediaDriver !== "s3") {
+    error("MEDIA_STORAGE_DRIVER", "must be local with a persistent absolute mount or s3");
   } else {
     ok("MEDIA_STORAGE_DRIVER", "s3");
   }
 
-  if (process.env.MEDIA_ALLOW_LOCAL_IN_PRODUCTION === "true") {
+  if (process.env.MEDIA_ALLOW_LOCAL_IN_PRODUCTION === "true" && mediaDriver !== "local") {
     error("MEDIA_ALLOW_LOCAL_IN_PRODUCTION", "must not be enabled in production");
   }
 
-  for (const name of ["S3_BUCKET", "S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY"]) {
-    if (present(name)) {
-      ok(name, "present");
-    } else {
-      error(name, "missing for the s3 driver");
+  if (mediaDriver === "s3") {
+    for (const name of ["S3_BUCKET", "S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY"]) {
+      if (present(name)) {
+        ok(name, "present");
+      } else {
+        error(name, "missing for the s3 driver");
+      }
     }
-  }
 
-  if (!present("S3_REGION")) {
-    warn("S3_REGION", "not set; the code defaults to us-east-1");
+    if (!present("S3_REGION")) {
+      warn("S3_REGION", "not set; the code defaults to us-east-1");
+    }
   }
 } else {
   ok("MEDIA_STORAGE_DRIVER", `${mediaDriver} (development)`);
@@ -259,8 +274,22 @@ if (production) {
     error("ADMIN_MAIL_TRANSPORT", "no transport configured; production password recovery and invitations cannot be delivered");
   } else if (mailTransport === "file") {
     error("ADMIN_MAIL_TRANSPORT", "file transport writes to disk and never delivers; configure a real provider");
+  } else if (mailTransport === "resend") {
+    checkSecret("RESEND_API_KEY", 20);
+    if (process.env.RESEND_SENDER_VERIFIED !== "true") {
+      error("RESEND_SENDER_VERIFIED", "must be true only after Resend verifies the sender domain");
+    } else {
+      ok("RESEND_SENDER_VERIFIED", "confirmed");
+    }
+    const sender = present("EMAIL_FROM");
+    if (!sender || !/^\S+@\S+\.\S+$/.test(sender)) {
+      error("EMAIL_FROM", "must be a valid verified sender address");
+    } else {
+      ok("EMAIL_FROM", sender);
+    }
+    ok("ADMIN_MAIL_TRANSPORT", "resend");
   } else {
-    ok("ADMIN_MAIL_TRANSPORT", mailTransport);
+    error("ADMIN_MAIL_TRANSPORT", `unsupported production transport: ${mailTransport}; use resend or implement a provider`);
   }
 } else {
   ok("ADMIN_MAIL_TRANSPORT", mailTransport === "file" ? "file (development only)" : mailTransport);

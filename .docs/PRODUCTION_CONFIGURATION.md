@@ -35,14 +35,14 @@ over values in `--env-file`. Do not pass secrets as command-line values.
 | `NEXTAUTH_SECRET` or `AUTH_SECRET` | Yes | At least 32 characters, cryptographically random, unique per environment. Set only one where practical. |
 | `RATE_LIMIT_SECRET` | Yes | Dedicated, random secret, at least 32 characters; must differ from session secret. |
 | `ANALYTICS_HASH_SECRET` | Recommended | Dedicated secret of at least 16 characters; do not reuse session or rate-limit key. Analytics falls back to session key if absent. |
-| `MEDIA_STORAGE_DRIVER` | Yes | `s3` in production. Local filesystem is ephemeral and rejected by preflight. |
-| `S3_BUCKET` | Yes | Production bucket name. |
-| `S3_ACCESS_KEY_ID` | Yes | Least-privilege object-storage credential. Prefer workload identity if provider supports it. |
-| `S3_SECRET_ACCESS_KEY` | Yes | Secret counterpart; rotate through storage provider, not repository. |
+| `MEDIA_STORAGE_DRIVER` | Yes | `local` is supported only with an absolute persistent Coolify mount and `MEDIA_ALLOW_LOCAL_IN_PRODUCTION=true`; `s3` is also supported. |
+| `S3_BUCKET` | Conditional | Required only when `MEDIA_STORAGE_DRIVER=s3`. |
+| `S3_ACCESS_KEY_ID` | Conditional | Required only for S3; use a least-privilege object-storage credential. |
+| `S3_SECRET_ACCESS_KEY` | Conditional | Required only for S3; rotate through the storage provider, not the repository. |
 | `S3_REGION` | Recommended | Defaults to `us-east-1`; set explicit provider region. |
 | `S3_ENDPOINT` | Conditional | Required for non-AWS S3-compatible storage. Use HTTPS endpoint. |
 | `S3_PUBLIC_URL` | Conditional | Public media origin only if assets are served through a public URL/CDN. |
-| `ADMIN_MAIL_TRANSPORT` | Yes | Must be a real production provider. `file` does not send email and blocks recovery/invitations. **No provider is implemented yet**; this is a launch blocker. |
+| `ADMIN_MAIL_TRANSPORT` | Yes | Use `resend` with `RESEND_API_KEY` and a verified `EMAIL_FROM`; `file` is development-only. |
 | `ANALYTICS_RAW_RETENTION_DAYS` | Optional | Code default 90 days; approved range 1–365. Must match privacy decision. |
 | `ANALYTICS_AGGREGATE_RETENTION_DAYS` | Optional | Code default 400 days; approved range 90–1095. |
 | `TRUST_PROXY_HEADERS` | Conditional | Set `true` only behind a trusted proxy that overwrites `x-forwarded-for` and `x-real-ip`; otherwise leave unset. |
@@ -60,9 +60,9 @@ Set `NODE_ENV=production` through the process manager/runtime. Never use
   `SUPER_ADMIN`.
 - [ ] Set unique session, rate-limit, and analytics secrets. Store in the
   production secret manager; restrict read access to deployment operators.
-- [ ] Integrate and test real mail provider for invitation and password recovery.
-  Current `getAdminMailer()` supports only development file transport; **do not
-  launch while this remains unresolved**.
+- [ ] Verify the Resend sender domain and test the provider in staging for
+  invitation and password recovery. Production requires
+  `ADMIN_MAIL_TRANSPORT=resend` and `RESEND_SENDER_VERIFIED=true`.
 - [ ] Run login lockout, `authVersion` revocation, reset-token expiry, and
   self-lockout tests against staging.
 
@@ -79,8 +79,9 @@ Set `NODE_ENV=production` through the process manager/runtime. Never use
 
 ### Media and content
 
-- [ ] Configure S3-compatible bucket, TLS endpoint, least-privilege credentials,
-  CORS/public delivery policy, lifecycle rules, and backup/versioning.
+- [ ] Configure the approved persistent local media mount at
+  `/data/flexbox/media`, verify its permissions and backup policy, and test
+  upload/retrieval after container recreation. S3 remains an alternative.
 - [ ] Set production domain, confirmed contact channel, and owner-approved
   directory destinations. The current seed contains no confirmed destinations;
   cards remain non-interactive until content is approved.
@@ -114,7 +115,8 @@ Set `NODE_ENV=production` through the process manager/runtime. Never use
   staging origin.
 - [ ] Backup + isolated restore check passes for release DB.
 - [ ] Verify admin sign-in, published public page, safe redirect, analytics, mail
-  recovery, S3 media, robots/indexing, security headers, and rollback procedure.
+  recovery, local persistent media, robots/indexing, security headers, and
+  rollback procedure.
 - [ ] Owner explicitly approves production release. No deployment is authorized
   by this document.
 
@@ -136,12 +138,12 @@ not a failed release check.
 
 ## 5. Current launch blockers
 
-1. No real transactional email provider exists; password recovery and
-   invitations cannot be delivered in production.
-2. No production domain, infrastructure, S3 configuration, or staging
-   environment exists yet.
-3. Owner has not confirmed directory destinations, public contact channel,
-   analytics disclosure, or final public domain.
+1. Resend sender-domain verification and API credentials still require
+   owner/provider action.
+2. PostgreSQL production resource, Coolify application, persistent media mount,
+   and staging environment are not provisioned yet.
+3. Owner has not confirmed directory destinations, public contact channel, or
+   analytics disclosure.
 4. No owner-approved production RPO/RTO and off-host backup target.
 
 These gaps must be resolved during Phase 8 before production deployment.

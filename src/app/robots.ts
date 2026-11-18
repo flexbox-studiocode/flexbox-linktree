@@ -3,10 +3,12 @@ import type { MetadataRoute } from "next";
 /**
  * Public robots policy.
  *
- * The admin area is not implemented yet and must never be indexed once it
- * exists, so the whole surface is disallowed except the public page.
+ * The admin and API surfaces must never be indexed; the public microsite is
+ * the only crawlable surface.
  */
 export default function robots(): MetadataRoute.Robots {
+  const siteUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+
   return {
     rules: [
       {
@@ -15,5 +17,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/admin", "/admin/", "/api/"],
       },
     ],
+    sitemap: `${siteUrl.replace(/\/$/, "")}/sitemap.xml`,
+    host: siteUrl,
   };
 }

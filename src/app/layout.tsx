@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 
 import "./globals.css";
 
+const siteUrl = new URL(process.env.NEXTAUTH_URL ?? "http://localhost:3000");
+
 /**
  * Typography per `.docs/Desain.md`:
  * - Anton for the display headline (approved).
@@ -26,6 +28,7 @@ const body = Manrope({
 });
 
 export const metadata: Metadata = {
+  metadataBase: siteUrl,
   title: {
     default: "Flexbox Studio — Digital Hub",
     template: "%s · Flexbox Studio",
@@ -37,14 +40,17 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
-  // Open Graph image and canonical URL stay unset until a verified production
-  // domain and approved sharing artwork exist.
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     type: "website",
     siteName: "Flexbox Studio",
     title: "Flexbox Studio — Digital Hub",
     description:
       "Direktori digital Flexbox Studio: produk, proyek, sumber daya, komunitas, dan kontak dalam satu tempat.",
+    url: "/",
+    images: [{ url: "/icon.png", alt: "Flexbox Studio" }],
   },
   twitter: {
     card: "summary",

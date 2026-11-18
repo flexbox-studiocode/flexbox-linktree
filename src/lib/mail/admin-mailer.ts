@@ -6,14 +6,9 @@ import { join, resolve } from "node:path";
 /**
  * Administrator notification mail.
  *
- * Phase 4 must deliver password-recovery links, but no transactional e-mail
- * provider has been approved yet. Rather than pretend, this module defines the
- * interface the application depends on and ships exactly one implementation:
- * a local, file-based transport that writes the message to
- * `.local-storage/mail/` (git-ignored). It refuses to run in production.
- *
- * Adding a real provider later means implementing `AdminMailer` and returning it
- * from `getAdminMailer()`; nothing in `src/features/auth` needs to change.
+ * The interface keeps auth flows independent from the transport. Development
+ * uses a local file transport; production may use Resend after the sender
+ * domain has been verified and the secret variables are configured.
  *
  * The reset link contains a single-use token, so the file transport is only ever
  * active outside production and the payload is never written to the logger.
@@ -60,6 +55,43 @@ export function createFileMailer(directory: string = MAIL_DIRECTORY): AdminMaile
   };
 }
 
+export function createResendMailer(
+  apiKey = process.env.RESEND_API_KEY,
+  from = process.env.EMAIL_FROM,
+): AdminMailer {
+  if (!apiKey) throw new Error("RESEND_API_KEY is required for the Resend mail transport.");
+  if (!from) throw new Error("EMAIL_FROM is required for the Resend mail transport.");
+  if (process.env.NODE_ENV === "production" && process.env.RESEND_SENDER_VERIFIED !== "true") {
+    throw new Error("Resend sender verification is not confirmed for production.");
+  }
+
+  return {
+    name: "resend",
+    async send(message) {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from,
+          to: [message.to],
+          subject: message.subject,
+          text: message.body,
+        }),
+        signal: AbortSignal.timeout(10_000),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Resend rejected the message with HTTP ${response.status}.`);
+      }
+
+      return { delivered: true };
+    },
+  };
+}
+
 /**
  * Resolves the mailer for the current environment.
  *
@@ -72,9 +104,13 @@ export function getAdminMailer(): AdminMailer {
     return createFileMailer();
   }
 
+  if (process.env.ADMIN_MAIL_TRANSPORT === "resend") {
+    return createResendMailer();
+  }
+
   if (process.env.NODE_ENV === "production") {
     throw new Error(
-      "No administrator mail transport is configured. Set ADMIN_MAIL_TRANSPORT or implement a provider before production.",
+      "No supported administrator mail transport is configured. Set ADMIN_MAIL_TRANSPORT=resend with verified sender credentials.",
     );
   }
 
