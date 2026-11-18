@@ -131,3 +131,21 @@ uses `microsite.flexbox.web.id`.
   VPS Murah/DNS provider correction.
 - Public DNS was queried read-only through 1.1.1.1 and 8.8.8.8. No DNS record
   was changed by this task.
+
+## Phase 8C infrastructure readiness audit
+
+- Authoritative apex DNS is correct: `microsite.flexbox.web.id A
+  217.216.146.40`.
+- Authoritative WWW DNS is correct: `www.microsite.flexbox.web.id CNAME
+  microsite.flexbox.web.id.`.
+- Propagation is incomplete or cached inconsistently: 1.1.1.1 returns the
+  approved target, while 8.8.8.8 still returns `www.microsite.`.
+- The zone SOA remains `a.misconfigured.dns.server.invalid` and needs provider
+  attention.
+- Resend DNS records for `mail.microsite.flexbox.web.id` are not visible in the
+  authoritative zone; sender verification remains pending in Resend.
+- `/data/flexbox/media` is absent and no persistent application mount exists.
+- No FlexBox application or PostgreSQL 17 production resource exists in Coolify.
+- Docker, Coolify, and Traefik are healthy; ports 80/443 are reserved by
+  Traefik, while Coolify host port 8000 and Traefik host port 8080 remain
+  exposed for provider-level access review.

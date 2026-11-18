@@ -8,7 +8,7 @@
 - Repository: `flexbox-studiocode/flexbox-linktree`
 - Branch: `main`
 - Build method: Nixpacks or tested production Dockerfile
-- Node.js: 26 (Node 24 is the supported alternative)
+- Node.js: 24
 - pnpm: `12.18.0`
 - Internal port: `3000`
 - Start command: `pnpm start`
@@ -80,3 +80,15 @@ owner approval. The application alias is
 `https://www.microsite.flexbox.web.id`; the canonical URL remains the microsite
 subdomain. Provider-level NAT must forward public TCP 80/443 to this
 VPS. Do not publish the application port directly and do not expose PostgreSQL.
+
+## Phase 8C readiness audit
+
+- Authoritative `microsite.flexbox.web.id` A record: `217.216.146.40`.
+- Authoritative `www.microsite.flexbox.web.id` CNAME: `microsite.flexbox.web.id.`.
+- Public resolver propagation is not yet uniform: 1.1.1.1 returns the approved
+  CNAME, while 8.8.8.8 still returns a stale `www.microsite.` target.
+- The current zone SOA still reports `a.misconfigured.dns.server.invalid`;
+  provider correction is required.
+- `/data/flexbox/media` is not present on the VPS and no application mount exists.
+- Only Coolify's internal PostgreSQL 15 container is present; PostgreSQL 17 for
+  this application has not been provisioned.

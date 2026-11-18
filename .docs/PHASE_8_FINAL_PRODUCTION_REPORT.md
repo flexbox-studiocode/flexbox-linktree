@@ -38,8 +38,10 @@ Coolify configuration change, or production email was performed.
 - Admin path: `/admin`
 - `microsite.flexbox.web.id` resolves to `217.216.146.40` through the
   authoritative nameserver and public resolvers.
-- `www.microsite.flexbox.web.id` currently points to the incorrect target
-  `www.microsite.`; it must point to `microsite.flexbox.web.id.`.
+- Authoritative `www.microsite.flexbox.web.id` points to the approved target
+  `microsite.flexbox.web.id.`.
+- Public resolver propagation is inconsistent: 1.1.1.1 has the approved target,
+  while 8.8.8.8 still returns the stale `www.microsite.` target.
 - The zone SOA still reports `a.misconfigured.dns.server.invalid`.
 - No active repository reference to the old microsite domain remains.
 - DNS cutover was not performed.
@@ -106,7 +108,7 @@ Coolify configuration change, or production email was performed.
 
 ## Required owner/provider actions
 
-1. Correct the WWW CNAME and SOA through the DNS provider.
+1. Confirm WWW DNS propagation and ask the DNS provider to correct the SOA.
 2. Confirm provider NAT forwarding of public TCP 80/443 to this VPS.
 3. Restrict or protect Coolify and Traefik dashboard exposure before public use.
 4. Create private PostgreSQL 17 in Coolify without publishing port 5432.
