@@ -65,18 +65,18 @@ Use these Coolify secret variables only after Resend verifies the sender domain:
 ```text
 ADMIN_MAIL_TRANSPORT=resend
 RESEND_API_KEY=<secret>
-EMAIL_FROM=noreply@mail.flexbox-microsite.web.id
+EMAIL_FROM=noreply@mail.microsite.flexbox.web.id
 RESEND_SENDER_VERIFIED=true
 ```
 
 Set `RESEND_SENDER_VERIFIED=true` only after Resend confirms
-`mail.flexbox-microsite.web.id` and its DNS records. Do not test delivery before
+`mail.microsite.flexbox.web.id` and its DNS records. Do not test delivery before
 domain verification and owner approval.
 
 ## Domain and proxy
 
-Configure `https://flexbox-microsite.web.id` through Coolify/Traefik only after
+Configure `https://microsite.flexbox.web.id` through Coolify/Traefik only after
 owner approval. The application alias is
-`https://www.flexbox-microsite.web.id`; the canonical URL remains the apex
-microsite domain. Provider-level NAT must forward public TCP 80/443 to this
+`https://www.microsite.flexbox.web.id`; the canonical URL remains the microsite
+subdomain. Provider-level NAT must forward public TCP 80/443 to this
 VPS. Do not publish the application port directly and do not expose PostgreSQL.

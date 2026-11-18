@@ -1,7 +1,7 @@
 # Phase 8A Deployment Log
 
 Project: FlexBox Linktree
-Target: `flexbox-microsite.web.id`
+Target: `microsite.flexbox.web.id`
 Status: Phase 8A preparation; **not deployed**
 
 ## Safety boundary
@@ -26,14 +26,14 @@ VPS, or remove any container/volume.
 
 ## Infrastructure decisions
 
-- Primary domain: `flexbox-microsite.web.id`
-- WWW alias: `www.flexbox-microsite.web.id`
-- Admin path: `flexbox-microsite.web.id/admin`
-- Canonical URL: `https://flexbox-microsite.web.id`
+- Primary domain: `microsite.flexbox.web.id`
+- WWW alias: `www.microsite.flexbox.web.id`
+- Admin path: `microsite.flexbox.web.id/admin`
+- Canonical URL: `https://microsite.flexbox.web.id`
 - Nameservers remain `ns1.dnama.id` and `ns2.dnama.id`
 - Media target: local persistent storage at `/data/flexbox/media`
 - Database target: PostgreSQL 17 through Coolify, private network only
-- Email target: Resend, sender `noreply@mail.flexbox-microsite.web.id`
+- Email target: Resend, sender `noreply@mail.microsite.flexbox.web.id`
 
 ## NAT audit
 
@@ -94,12 +94,12 @@ pre-build requirement, not a production migration.
 
 The only remaining `flexbox.web.id` reference is this log's historical note that
 the company domain is not the microsite domain. Active application configuration
-uses `flexbox-microsite.web.id`.
+uses `microsite.flexbox.web.id`.
 
 ## Remaining owner/provider actions
 
 1. Confirm NAT provider forwarding for TCP 80 and 443.
-2. Verify `mail.flexbox-microsite.web.id` in Resend and publish the requested DNS records;
+2. Verify `mail.microsite.flexbox.web.id` in Resend and publish the requested DNS records;
    only then set `RESEND_SENDER_VERIFIED=true`.
 3. Approve creation of private PostgreSQL 17 and the Coolify application.
 4. Approve the persistent volume mapping to `/data/flexbox/media`.
@@ -109,7 +109,7 @@ uses `flexbox-microsite.web.id`.
 
 ## Final pre-deployment blockers
 
-- Resend must verify `mail.flexbox-microsite.web.id`; only then may the owner
+- Resend must verify `mail.microsite.flexbox.web.id`; only then may the owner
   provide `RESEND_API_KEY`, set `RESEND_SENDER_VERIFIED=true`, and authorize a
   staging delivery test.
 - Coolify PostgreSQL 17, the private application resource, and the persistent
@@ -118,3 +118,16 @@ uses `flexbox-microsite.web.id`.
   verified before claiming the microsite is live.
 - Production secrets, backup/RPO/RTO policy, staging checks, and explicit release
   approval are still required.
+
+## Phase 8B final domain audit
+
+- Final canonical domain: `microsite.flexbox.web.id`.
+- Final WWW alias: `www.microsite.flexbox.web.id`.
+- Authoritative apex A record currently resolves to `217.216.146.40`.
+- Authoritative WWW CNAME currently resolves to `www.microsite.`, which is not
+  the approved target. It must be changed manually to
+  `microsite.flexbox.web.id.`.
+- The zone SOA still reports `a.misconfigured.dns.server.invalid`; this requires
+  VPS Murah/DNS provider correction.
+- Public DNS was queried read-only through 1.1.1.1 and 8.8.8.8. No DNS record
+  was changed by this task.

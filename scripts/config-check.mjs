@@ -160,7 +160,7 @@ if (rateLimitSecret && (rateLimitSecret === nextAuthSecret || rateLimitSecret ==
 
 // 4. Canonical URL
 const nextAuthUrl = present("NEXTAUTH_URL");
-const expectedProductionOrigin = "https://flexbox-microsite.web.id";
+const expectedProductionOrigin = "https://microsite.flexbox.web.id";
 
 if (!nextAuthUrl) {
   error("NEXTAUTH_URL", "missing; recovery links and secure cookie prefixes cannot be derived");

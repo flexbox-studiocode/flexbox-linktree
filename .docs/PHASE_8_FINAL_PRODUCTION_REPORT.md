@@ -33,12 +33,15 @@ Coolify configuration change, or production email was performed.
 
 ## Domain, DNS, NAT, and HTTPS
 
-- Canonical domain: `https://flexbox-microsite.web.id`
-- WWW alias: `https://www.flexbox-microsite.web.id`
+- Canonical domain: `https://microsite.flexbox.web.id`
+- WWW alias: `https://www.microsite.flexbox.web.id`
 - Admin path: `/admin`
-- No active repository reference to `flexbox.web.id` remains.
-- External DNS queries to 1.1.1.1 and 8.8.8.8 returned no A record for the
-  microsite apex or WWW hostname at audit time.
+- `microsite.flexbox.web.id` resolves to `217.216.146.40` through the
+  authoritative nameserver and public resolvers.
+- `www.microsite.flexbox.web.id` currently points to the incorrect target
+  `www.microsite.`; it must point to `microsite.flexbox.web.id.`.
+- The zone SOA still reports `a.misconfigured.dns.server.invalid`.
+- No active repository reference to the old microsite domain remains.
 - DNS cutover was not performed.
 - Provider NAT forwarding for TCP 80/443 is not yet verified.
 - HTTPS certificate was not issued and production is not live.
@@ -81,7 +84,7 @@ Coolify configuration change, or production email was performed.
 
 - Transport implementation uses the Resend HTTPS API.
 - Invitation and password-recovery flows call the shared admin mailer.
-- Production sender: `noreply@mail.flexbox-microsite.web.id`.
+- Production sender: `noreply@mail.microsite.flexbox.web.id`.
 - Resend sender-domain verification is not confirmed.
 - No production API key was inspected or printed.
 - No production email was sent.
@@ -91,23 +94,25 @@ Coolify configuration change, or production email was performed.
 - `/api/health` checks database and storage readiness and returns 200/503
   without sensitive details.
 - Node 24 + pnpm 12.18.0 frozen install: PASS.
+- Node 24 full pipeline with disposable PostgreSQL 17: PASS.
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build`: PASS.
+- Test suite: 28 files / 303 tests PASS.
+- `pnpm config:check --production` with internal synthetic database host:
+  **0 errors, 0 warnings**.
 - Node 26 + pnpm 12.18.0 install, lint, typecheck, build: PASS.
 - `pnpm db:validate`: PASS.
 - Disposable PostgreSQL 17 migration and seed: PASS.
-- Test suite: 28 files / 303 tests PASS.
 - Production config check with empty environment: correctly BLOCKED.
-- Synthetic production config check: 0 errors, 1 warning because both session
-  secret variable names were supplied; use only one in production.
 
 ## Required owner/provider actions
 
-1. Add and verify public DNS records for the microsite domain.
+1. Correct the WWW CNAME and SOA through the DNS provider.
 2. Confirm provider NAT forwarding of public TCP 80/443 to this VPS.
 3. Restrict or protect Coolify and Traefik dashboard exposure before public use.
 4. Create private PostgreSQL 17 in Coolify without publishing port 5432.
 5. Create the application resource from the `main` branch.
 6. Mount persistent `/data/flexbox/media` and define its backup policy.
-7. Verify `mail.flexbox-microsite.web.id` in Resend and add its DNS records.
+7. Verify `mail.microsite.flexbox.web.id` in Resend and add its DNS records.
 8. Provide production secrets directly in Coolify, never in Git or chat.
 9. Provide the owner's Git name/email for local repository configuration if a
    commit and push are approved.
