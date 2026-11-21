@@ -17,4 +17,8 @@ with code 1 and entered a restart loop. The local image reproduced the cause:
 the separate `node:24-bookworm-slim` runtime stage had no usable `pnpm` command
 for the non-root runtime user. The runtime command is now the equivalent direct
 Next.js invocation, avoiding package-manager download and lockfile writes in the
-running container. The deployment will be retried after this repair is pushed.
+running container. The next deployment reached a working application endpoint
+(`GET /api/health` returned 200 with database and storage `ok`), but the Docker
+health probe itself failed because the slim runtime lacked both `curl` and
+`wget`. The runtime image now includes `curl` for Coolify's probe. The
+deployment will be retried after this repair is pushed.
