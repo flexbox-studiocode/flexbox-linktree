@@ -32,8 +32,11 @@ The local Coolify service was checked on `http://127.0.0.1:8000`:
 | `/api/v1/servers` | HTTP 401 |
 | `/api/v1/resources` | HTTP 401 |
 
-This proves the API is reachable and protected. No token was present in the
-VPS process environment, Coolify container environment, or available CLI tools.
+This proves the API is reachable and protected. During the current Phase 8H
+execution, `COOLIFY_API_TOKEN` was not present in the automation process
+environment. The token was not requested in chat, searched for in shell
+history, or printed. The discovery request therefore could not safely be
+authenticated from this execution session.
 No internal Coolify database or tables were inspected or modified.
 
 ## Official API capabilities confirmed
@@ -56,10 +59,11 @@ checks, domains, ports, and storage configuration.
 
 ## Required owner action
 
-Create a short-lived Coolify API token through the official dashboard
-(`Keys & Tokens` → `API Tokens`) and make it available to the automation through
-the VPS secret store or an interactive environment variable. Do not paste the
+Make the already-created Coolify API token available to the automation through
+the VPS secret store or the active execution environment. Do not paste the
 token into chat, Git, or a command that will be retained in shell history.
+The next execution must confirm only that the variable is present; its value
+must never be printed.
 
 Recommended staged permissions:
 

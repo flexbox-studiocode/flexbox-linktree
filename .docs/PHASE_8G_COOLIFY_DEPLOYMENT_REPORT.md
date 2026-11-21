@@ -19,7 +19,8 @@ Status: **BLOCKED — NOT YET DEPLOYED**
 ## Current state
 
 - Coolify API health is reachable.
-- Protected API is reachable but unauthenticated.
+- Protected API is reachable but unauthenticated in the current automation
+  session because `COOLIFY_API_TOKEN` was not available to that process.
 - No project/environment/server/destination UUIDs were obtained.
 - No application resource was created.
 - A Coolify-managed PostgreSQL 17 resource exists and is healthy, but it still
@@ -42,4 +43,5 @@ Status: **BLOCKED — NOT YET DEPLOYED**
 8. Validate the resource definitions before any deployment request.
 
 Production migration, DNS/HTTPS cutover, and email delivery remain separately
-gated owner actions.
+gated owner actions. Provisioning is also blocked until the token is securely
+made available to the active automation session.

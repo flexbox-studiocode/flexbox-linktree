@@ -2,8 +2,9 @@
 
 Status: **BLOCKED**
 
-The project is not live. No production application or database resource exists
-in Coolify, and no production migration or deployment has been performed.
+The project is not live. No production application resource exists in Coolify;
+the existing PostgreSQL 17 resource is healthy, but no production migration or
+application deployment has been performed.
 
 ## Verified prerequisites
 
@@ -17,7 +18,8 @@ in Coolify, and no production migration or deployment has been performed.
 
 ## Blocking prerequisites
 
-- Coolify API token and authorized resource discovery.
+- Coolify API token available to the active automation session and authorized
+  resource discovery.
 - PostgreSQL 17 private resource exists, but `flexbox_linktree` and
   `flexbox_app` plus application connection details are not ready.
 - Official Coolify persistent storage mount for the application.
