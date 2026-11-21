@@ -2,4 +2,7 @@
 
 Status: NOT RUN
 
-Production acceptance cannot start until migration, public deployment, HTTPS, database, media, authentication, email policy, backup/restore, and external smoke tests are complete.
+Production acceptance remains NOT RUN. Migration, public deployment, HTTPS,
+database runtime, authentication, media, backup/restore, and external smoke
+tests are not yet accepted as a production release. The pre-migration backup
+and isolated restore verification passed; staging acceptance passed internally.

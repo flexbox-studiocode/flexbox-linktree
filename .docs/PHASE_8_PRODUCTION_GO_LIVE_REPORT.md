@@ -14,6 +14,12 @@ Status: **BLOCKED — NOT YET DEPLOYED**
 - Staging deployment `jzutavljasxm0wb2ae69rtfu` finished successfully. The
   container is healthy; internal health returned database/storage `ok`, and
   the staging media mount passed a runtime write/read/delete test.
+- Production preflight selected the accepted Dockerfile build, added explicit
+  no-email mode through Coolify, and verified the production media directory
+  is writable by runtime UID/GID 1000:1000 with mode 0750.
+- A fresh production database backup was created and restore-verified in an
+  isolated PostgreSQL 17 instance. All 10 migrations remain pending in the
+  empty production database.
 - Production deployment history is empty and no production application
   container exists.
 - No production migration, seed, administrator bootstrap, public deployment,
@@ -37,9 +43,12 @@ Status: **BLOCKED — NOT YET DEPLOYED**
 - Determine whether the owner wants a provider-managed staging hostname or
   to proceed with production gates; do not use the production domain for
   staging.
-- Provide and verify Resend sender-domain credentials before enabling email.
-- Resolve provider DNS/SOA and independently confirm TCP 80/443 NAT.
-- Obtain explicit approval for production migration and first public deploy.
+- Provide and verify Resend sender-domain credentials before enabling email;
+  email remains disabled for this release.
+- Provider must connect the domain/website layer and confirm independent TCP
+  80/443 NAT; public HTTPS currently has no usable certificate.
+- Obtain explicit approval for production migration, administrator bootstrap,
+  and first public deploy.
 
 ## Security status
 
@@ -52,14 +61,15 @@ Status: **BLOCKED — NOT YET DEPLOYED**
 
 ## Read-only public/network follow-up
 
-- Earlier public resolver checks recorded A
+- Current public resolver checks record A
   `microsite.flexbox.web.id -> 217.216.146.40` and CNAME
   `www.microsite.flexbox.web.id -> microsite.flexbox.web.id`.
-- Authoritative NS were recorded as `ns1.dnama.id` and `ns2.dnama.id`.
-- The earlier zone SOA reported `a.misconfigured.dns.server.invalid`; this
-  remains an external provider action until independently rechecked.
-- A public HTTP 404 and failed HTTPS handshake were correctly not treated as
-  application success because no production deployment/container exists.
+- Current authoritative nameservers are the `b/c/d/e/f.dns.id` servers and
+  the SOA is served by `b.dns.id`; the previous malformed SOA was not
+  reproduced.
+- Public HTTP still returns the provider's "Domain belum terhubung" page and
+  HTTPS has no usable certificate; these are not treated as application
+  success.
 - No firewall, NAT, SSH, DNS, or management-port change was made.
 
 ## Final status
