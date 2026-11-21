@@ -1,6 +1,6 @@
 # Phase 8Z — Production Final Audit
 
-Status: BLOCKED — ADMIN BOOTSTRAP AND DEPLOYMENT APPROVAL PENDING
+Status: PASS FOR DEPLOYMENT PREFLIGHT — OWNER DEPLOYMENT APPROVAL REQUIRED
 
 ## Verified
 
@@ -18,11 +18,11 @@ Status: BLOCKED — ADMIN BOOTSTRAP AND DEPLOYMENT APPROVAL PENDING
 - Staging remains healthy and isolated.
 - VPS capacity: approximately 9.8 GB disk available and 1.9 GB memory
   available at audit time.
+- Initial `SUPER_ADMIN` bootstrap completed and was verified with one active
+  Argon2id-backed account and one `ACCOUNT_BOOTSTRAPPED` event.
 
 ## Pending gates
 
-- Initial `SUPER_ADMIN` bootstrap: no account exists yet; owner interactive
-  input is required.
 - Separate approval for first production deployment is still required.
 - Public HTTPS remains unverified until a production container/router exists.
 - Public acceptance tests have not run.

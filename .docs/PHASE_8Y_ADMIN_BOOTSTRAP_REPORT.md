@@ -1,11 +1,9 @@
 # Phase 8Y — Production Administrator Bootstrap Report
 
-Status: READY — OWNER INTERACTIVE INPUT REQUIRED
+Status: PASS — ADMINISTRATOR BOOTSTRAP COMPLETE
 
-Phase 8X production migration completed successfully. Read-only verification
-found `admin_users=0`, so the one-time bootstrap is eligible. No administrator
-has been created yet because the owner must provide the intended email, full
-name, and password interactively.
+Phase 8X production migration completed successfully. The owner-run secure
+bootstrap completed with exit code 0.
 
 The audited CLI procedure remains:
 
@@ -27,5 +25,20 @@ the production target, runs Node.js 24 with pnpm 12.18.0 on the private
 `coolify` network, sets `ADMIN_BOOTSTRAP_ENABLED=true` only for the child
 bootstrap command, and removes all sensitive shell variables after exit. It
 does not modify Coolify environment variables.
+
+## Verification — PASS
+
+- Administrator count: 1.
+- Role: `SUPER_ADMIN`.
+- Status: `ACTIVE`.
+- Password hash: present and Argon2id encoded; no plaintext password detected.
+- `ACCOUNT_BOOTSTRAPPED` security event: exactly 1.
+- No email was sent.
+- `ADMIN_BOOTSTRAP_ENABLED`: explicitly set to `false` in the protected
+  production environment metadata after bootstrap.
+- No second administrator was created.
+
+The admin ID is recorded in the operational terminal output only and is not a
+credential. The password is not recorded in this report.
 
 No seed, deployment, email, DNS, NAT, firewall, or SSH change was performed.

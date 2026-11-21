@@ -27,10 +27,13 @@ Status: **BLOCKED — NOT YET DEPLOYED**
 - Phase 8X migration is now complete: all 10 production migrations applied,
   with zero pending or failed entries. Schema, role security, staging
   isolation, backup state, and private database port were verified.
+- Phase 8Y administrator bootstrap completed successfully: one active
+  `SUPER_ADMIN`, Argon2id password hash, one `ACCOUNT_BOOTSTRAPPED` event, and
+  bootstrap flag disabled. No email was sent.
 - Production deployment history is empty and no production application
   container exists.
-- No production migration, seed, administrator bootstrap, public deployment,
-  HTTPS issuance, DNS change, NAT change, or production email was performed.
+- No production seed, public deployment, HTTPS issuance, DNS change, NAT
+  change, or production email was performed.
 
 ## Completed readiness work
 
@@ -54,9 +57,8 @@ Status: **BLOCKED — NOT YET DEPLOYED**
   email remains disabled for this release.
 - Provider must connect the domain/website layer and confirm independent TCP
   80/443 NAT; public HTTPS currently has no usable certificate.
-- Obtain explicit approval for production migration, administrator bootstrap,
-  and first public deploy.
-- Approve and execute the separate Phase 8Y administrator bootstrap.
+- Approve the first production deployment through the existing Coolify
+  application before any deployment API call is made.
 
 ## Security status
 
