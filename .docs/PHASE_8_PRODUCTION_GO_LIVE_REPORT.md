@@ -11,6 +11,9 @@ Status: **BLOCKED — NOT YET DEPLOYED**
   role exist.
 - A separate Coolify staging environment, staging database/role, staging
   application resource, and staging media mount were provisioned in Phase 8J–8L.
+- Staging deployment `jzutavljasxm0wb2ae69rtfu` finished successfully. The
+  container is healthy; internal health returned database/storage `ok`, and
+  the staging media mount passed a runtime write/read/delete test.
 - Production deployment history is empty and no production application
   container exists.
 - No production migration, seed, administrator bootstrap, public deployment,
@@ -27,9 +30,13 @@ Status: **BLOCKED — NOT YET DEPLOYED**
 
 ## Blocking prerequisites
 
-- Deploy and accept the isolated staging resource.
-- Determine application runtime UID/GID and validate media write/read
-  persistence in staging.
+- External staging preview is blocked by the provider's Domain & Website
+  layer, which returns a "Domain belum terhubung" page for the generated
+  `sslip.io` hostname. Local Traefik host routing and the application itself
+  return HTTP 200.
+- Determine whether the owner wants a provider-managed staging hostname or
+  to proceed with production gates; do not use the production domain for
+  staging.
 - Provide and verify Resend sender-domain credentials before enabling email.
 - Resolve provider DNS/SOA and independently confirm TCP 80/443 NAT.
 - Obtain explicit approval for production migration and first public deploy.
@@ -57,6 +64,7 @@ Status: **BLOCKED — NOT YET DEPLOYED**
 
 ## Final status
 
-**PROVISIONED BUT NOT DEPLOYED — no public production verification is claimed.**
+**STAGING ACCEPTED INTERNALLY; PRODUCTION PROVISIONED BUT NOT DEPLOYED — no
+public production verification is claimed.**
 
 Detailed evidence is maintained in the Phase 8J–8T reports.
