@@ -4,8 +4,10 @@ Status: **NOT YET DEPLOYED**
 
 ## PostgreSQL 17 readiness
 
-No production database was created. The only PostgreSQL container currently
-running is Coolify's internal PostgreSQL 15 service and it must not be reused.
+The Coolify-managed PostgreSQL 17 resource now exists and is healthy. The
+Coolify internal PostgreSQL 15 service remains separate and must not be reused.
+The application database is not ready yet: read-only inspection found only the
+default `postgres` database and `postgres` role.
 
 Recommended Coolify resource:
 
@@ -21,6 +23,10 @@ Recommended Coolify resource:
 
 The password must be generated in Coolify and never placed in Git or chat.
 Production migration is not authorized and was not run.
+
+The target database `flexbox_linktree` and dedicated role `flexbox_app` still
+need to be created through an approved Coolify/PostgreSQL administration flow.
+No application schema or migration exists in this resource.
 
 ## Backup strategy
 

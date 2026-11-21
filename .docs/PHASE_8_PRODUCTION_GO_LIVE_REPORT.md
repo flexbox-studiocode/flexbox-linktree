@@ -18,7 +18,8 @@ in Coolify, and no production migration or deployment has been performed.
 ## Blocking prerequisites
 
 - Coolify API token and authorized resource discovery.
-- PostgreSQL 17 private resource and application connection details.
+- PostgreSQL 17 private resource exists, but `flexbox_linktree` and
+  `flexbox_app` plus application connection details are not ready.
 - Official Coolify persistent storage mount for the application.
 - Resend sender-domain verification and provider-issued DNS records.
 - Provider confirmation of NAT TCP 80/443.

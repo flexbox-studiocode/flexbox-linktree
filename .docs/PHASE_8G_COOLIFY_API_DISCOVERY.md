@@ -11,7 +11,8 @@ Audit date: 2026-11-21
 - Traefik: `3.7.19`
 - Docker Engine: `29.10.0`
 - Coolify health: healthy
-- No FlexBox application or PostgreSQL 17 resource is present.
+- A Coolify-managed PostgreSQL 17 resource is now present; no FlexBox
+  application resource is present.
 
 The original Phase 8 baseline named Coolify 4.7.5. The running installation is
 now 4.7.6; no upgrade or downgrade was performed by this audit.
@@ -69,6 +70,26 @@ Recommended staged permissions:
 The token must be created for the team that owns the FlexBox resources. On
 self-hosted Coolify, API access must also be enabled in the official settings;
 IP allowlisting should be restricted to the VPS/operator source as appropriate.
+
+## Resource observed after discovery
+
+- Database resource UUID/container: `aswul0ozryb1hxawjfzjsnwj`.
+- Project: `flexbox`.
+- Environment: `production`.
+- Image: `postgres:17-alpine`.
+- Status/health: running/healthy.
+- Network: external Docker network `coolify` with private container address.
+- Host port 5432: not published and no host listener found.
+- Persistent volume: `postgres-data-aswul0ozryb1hxawjfzjsnwj` mounted at
+  `/var/lib/postgresql/data`.
+- Initialized database/role: only default `postgres` database and superuser
+  role were found; `flexbox_linktree` and `flexbox_app` do not exist.
+
+The resource is healthy but not yet application-ready. Changing only
+`POSTGRES_DB` or `POSTGRES_USER` in the generated Compose file would not create
+objects in an already initialized PostgreSQL volume. The target database/user
+must be created through an approved Coolify/ PostgreSQL administration flow,
+with the generated password then stored in Coolify secret management.
 
 ## Safety result
 

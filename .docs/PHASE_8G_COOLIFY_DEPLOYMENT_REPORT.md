@@ -22,7 +22,9 @@ Status: **BLOCKED — NOT YET DEPLOYED**
 - Protected API is reachable but unauthenticated.
 - No project/environment/server/destination UUIDs were obtained.
 - No application resource was created.
-- No PostgreSQL 17 resource was created.
+- A Coolify-managed PostgreSQL 17 resource exists and is healthy, but it still
+  contains only the default `postgres` database and role; the target application
+  database/user are not ready.
 - No environment variables or secrets were sent to Coolify.
 - No deployment was triggered.
 
@@ -31,8 +33,8 @@ Status: **BLOCKED — NOT YET DEPLOYED**
 1. List and verify the target team, project, environment, server, and Docker
    destination.
 2. Confirm capacity and ensure no duplicate FlexBox resources exist.
-3. Create PostgreSQL 17 with `is_public=false`, private networking, persistent
-   storage, health checks, database `flexbox_linktree`, and user `flexbox_app`.
+3. Create `flexbox_linktree` and `flexbox_app` through the approved database
+   administration flow, then store the generated role password in Coolify.
 4. Verify database status and internal network without exposing credentials.
 5. Create the Next.js application from `main` with `instant_deploy=false`.
 6. Attach `/data/flexbox/media` using the official application storage endpoint.
