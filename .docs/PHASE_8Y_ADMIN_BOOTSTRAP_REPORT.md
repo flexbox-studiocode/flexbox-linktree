@@ -1,10 +1,11 @@
 # Phase 8Y — Production Administrator Bootstrap Report
 
-Status: OWNER APPROVAL REQUIRED / NOT RUN
+Status: READY — OWNER INTERACTIVE INPUT REQUIRED
 
-Phase 8X production migration completed successfully. Administrator bootstrap
-was intentionally not run because the owner has not yet approved this separate
-operation.
+Phase 8X production migration completed successfully. Read-only verification
+found `admin_users=0`, so the one-time bootstrap is eligible. No administrator
+has been created yet because the owner must provide the intended email, full
+name, and password interactively.
 
 The audited CLI procedure remains:
 
@@ -19,5 +20,12 @@ The audited CLI procedure remains:
 Required inputs are the owner's intended administrator email, display name, and
 strong password entered interactively. Do not send credentials through chat or
 store them in Git, logs, `.env` files, or reports.
+
+A root-only secure helper is ready at
+`/root/.config/flexbox/phase8y-bootstrap-secure.sh` (mode 0700). It validates
+the production target, runs Node.js 24 with pnpm 12.18.0 on the private
+`coolify` network, sets `ADMIN_BOOTSTRAP_ENABLED=true` only for the child
+bootstrap command, and removes all sensitive shell variables after exit. It
+does not modify Coolify environment variables.
 
 No seed, deployment, email, DNS, NAT, firewall, or SSH change was performed.
