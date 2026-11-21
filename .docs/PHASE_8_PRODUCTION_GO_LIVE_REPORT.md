@@ -67,9 +67,10 @@ Status: **BLOCKED — NOT YET DEPLOYED**
 - Current authoritative nameservers are the `b/c/d/e/f.dns.id` servers and
   the SOA is served by `b.dns.id`; the previous malformed SOA was not
   reproduced.
-- Public HTTP still returns the provider's "Domain belum terhubung" page and
-  HTTPS has no usable certificate; these are not treated as application
-  success.
+- Public HTTP and HTTPS now return HTTP 503 with the Coolify "Site not
+  available" page because no production upstream container is deployed.
+  HTTPS presents `TRAEFIK DEFAULT CERT`, not a valid microsite certificate;
+  these results are not treated as application success.
 - No firewall, NAT, SSH, DNS, or management-port change was made.
 
 ## Final status

@@ -20,10 +20,13 @@ Status: BLOCKED — PROVIDER ACTION REQUIRED
 - A TCP check from the VPS to the public IP observed 80/443 open and 5432
   closed. This is not an independent external vantage point and does not
   prove provider NAT end-to-end.
-- Public HTTP requests to the production host currently return the provider
-  "Domain belum terhubung" page, not the application.
-- Public HTTPS does not present a usable certificate; no certificate chain or
-  redirect was accepted as valid.
+- Public HTTP and HTTPS requests currently return HTTP 503 with the Coolify
+  "Site not available" page, not the application.
+- TLS presents `TRAEFIK DEFAULT CERT`, whose SAN does not contain the
+  production hostname; no valid production certificate or redirect was
+  accepted.
+- The result is consistent with the absence of a production container and
+  zero production deployment records, not with a DNS resolution failure.
 - No DNS, NAT, firewall, SSH, or provider setting was changed.
 
 ## Required provider action
