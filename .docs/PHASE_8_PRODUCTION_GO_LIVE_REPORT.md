@@ -33,6 +33,23 @@ Status: **NOT YET DEPLOYED**
 - Coolify and Traefik administrative exposure still requires final access-control
   review; no firewall or SSH change was made.
 
+## Read-only public/network follow-up
+
+- Public resolvers `1.1.1.1` and `8.8.8.8` returned A
+  `microsite.flexbox.web.id -> 217.216.146.40` and CNAME
+  `www.microsite.flexbox.web.id -> microsite.flexbox.web.id`.
+- Authoritative NS remain `ns1.dnama.id` and `ns2.dnama.id`.
+- The zone SOA still reports `a.misconfigured.dns.server.invalid` and must be
+  corrected by the DNS provider.
+- A request to the public HTTP hostname returned `404 Not Found`; this is not
+  treated as an application success because no deployment/container exists.
+- HTTPS returned no certificate and the TLS handshake failed. SSL is therefore
+  not ready and no live claim is made.
+- Local Coolify port 8000 returned the expected login redirect. No firewall,
+  NAT, SSH, DNS, or management-port change was made. Provider mapping for
+  public management access and TCP 80/443 still requires independent provider
+  confirmation.
+
 ## Final status
 
 **PROVISIONED BUT NOT DEPLOYED — no public production verification is claimed.**
