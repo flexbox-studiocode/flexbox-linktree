@@ -20,6 +20,10 @@ Status: **BLOCKED — NOT YET DEPLOYED**
 - A fresh production database backup was created and restore-verified in an
   isolated PostgreSQL 17 instance. All 10 migrations remain pending in the
   empty production database.
+- Phase 8X final target and role verification passed, but migration execution
+  was blocked because the protected production `DATABASE_URL` cannot be
+  injected into a Prisma execution context without exposing or changing the
+  secret. No migration was run.
 - Production deployment history is empty and no production application
   container exists.
 - No production migration, seed, administrator bootstrap, public deployment,
@@ -49,6 +53,9 @@ Status: **BLOCKED — NOT YET DEPLOYED**
   80/443 NAT; public HTTPS currently has no usable certificate.
 - Obtain explicit approval for production migration, administrator bootstrap,
   and first public deploy.
+- Provide a secure Coolify/one-off execution context for the existing
+  protected production `DATABASE_URL`, then run and verify Phase 8X before
+  bootstrap or deployment.
 
 ## Security status
 
