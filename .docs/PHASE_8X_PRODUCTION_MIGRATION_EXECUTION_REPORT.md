@@ -1,6 +1,6 @@
 # Phase 8X — Production Migration Execution Report
 
-Status: BLOCKED — MIGRATION NOT EXECUTED
+Status: PASS — PRODUCTION MIGRATION COMPLETE
 
 Execution date: 2026-11-21 UTC
 
@@ -54,13 +54,14 @@ No migration SQL was edited, created, reset, or run against production.
 - Restore verification into a disposable PostgreSQL 17 instance: PASS.
 - Previous backups were preserved.
 
-## Migration execution blocker and safe resolution
+## Migration execution and safe secret resolution
 
 The required production `DATABASE_URL` is stored as a protected Coolify
 environment variable with `is_shown_once=true`. Coolify's API/response does
 not return its value, and the host has no installed Coolify CLI execution path.
 There is currently no production application container from which Coolify
-could inject that secret. The migration was therefore not started.
+could inject that secret. The owner-run protected stdin helper was therefore
+used after the role password and Coolify `DATABASE_URL` were synchronized.
 
 Using the database superuser password from the PostgreSQL container, guessing
 the application password, reading Coolify's internal database, or changing
@@ -76,30 +77,41 @@ arguments or an environment-at-create-time, runs Node.js 24 with pnpm
 removes its temporary dependency volume on exit. The helper itself contains
 no credential.
 
+The owner-run helper completed `pnpm db:migrate:deploy` with exit code 0. It
+used Node.js 24, pnpm 12.18.0, the repository Prisma configuration, and the
+production application role. No database superuser credential was used by the
+migration command.
+
 ## Not run
 
-- `pnpm db:migrate:deploy` — NOT RUN.
+- `pnpm db:migrate:deploy` — PASS, exit code 0.
 - Production seed — NOT RUN.
 - Admin bootstrap — NOT RUN.
 - Production deployment/container startup — NOT RUN.
 - Email/DNS/NAT/firewall/SSH changes — NOT RUN.
 
+## Post-migration verification — PASS
+
+- `_prisma_migrations`: 10 rows, all finished.
+- Pending migrations: 0.
+- Failed/rolled-back migrations: 0.
+- Production application tables: present, including CMS, auth, analytics, and
+  system tables.
+- Production enums: present and consistent with the migration set.
+- Production indexes/constraints: present; read-only catalog verification
+  completed.
+- `flexbox_app`: login enabled; superuser, CREATEDB, CREATEROLE,
+  replication, and BYPASSRLS all false.
+- Staging migration state remained 10 finished, 0 pending, 0 failed.
+- PostgreSQL host port 5432 remains unpublished.
+- Temporary migration dependency volume: removed.
+
+Repository `pnpm db:check` was not run as a separate process after migration;
+the equivalent read-only PostgreSQL catalog, migration, role, and isolation
+checks above passed without modifying data. No seed or sample data was added.
+
 ## Required owner action
 
-Run the prepared helper directly on the VPS, using the existing production
-`DATABASE_URL` from the Coolify secret store or the owner's secure password
-manager. Do not paste the URL into chat:
-
-```text
-/root/.config/flexbox/phase8x-migrate-secure.sh
-```
-
-Once that owner-run command completes successfully, rerun the final target
-check and execute only:
-
-```text
-pnpm db:migrate:deploy
-```
-
-Then verify all 10 migrations, schema, role privileges, and staging
-isolation. Do not run seed, bootstrap, or deployment in the same action.
+Phase 8X is complete. The next action requires separate owner approval for
+Phase 8Y admin bootstrap. Do not run seed, bootstrap, deployment, email, DNS,
+NAT, firewall, or SSH changes as part of this migration phase.

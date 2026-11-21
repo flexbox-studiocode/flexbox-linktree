@@ -24,6 +24,9 @@ Status: **BLOCKED — NOT YET DEPLOYED**
   was blocked because the protected production `DATABASE_URL` cannot be
   injected into a Prisma execution context without exposing or changing the
   secret. No migration was run.
+- Phase 8X migration is now complete: all 10 production migrations applied,
+  with zero pending or failed entries. Schema, role security, staging
+  isolation, backup state, and private database port were verified.
 - Production deployment history is empty and no production application
   container exists.
 - No production migration, seed, administrator bootstrap, public deployment,
@@ -53,9 +56,7 @@ Status: **BLOCKED — NOT YET DEPLOYED**
   80/443 NAT; public HTTPS currently has no usable certificate.
 - Obtain explicit approval for production migration, administrator bootstrap,
   and first public deploy.
-- Provide a secure Coolify/one-off execution context for the existing
-  protected production `DATABASE_URL`, then run and verify Phase 8X before
-  bootstrap or deployment.
+- Approve and execute the separate Phase 8Y administrator bootstrap.
 
 ## Security status
 
