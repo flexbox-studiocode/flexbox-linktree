@@ -1,47 +1,45 @@
 # Phase 8G Coolify Deployment Report
 
-Status: **BLOCKED — NOT YET DEPLOYED**
+Status: **PROVISIONED — NOT DEPLOYED**
 
 ## Target configuration
 
 - Repository: `https://github.com/flexbox-studiocode/flexbox-linktree`
 - Branch: `main`
-- Resource name: `flexbox-linktree`
-- Runtime: Node.js 24
-- Package manager: pnpm 12.18.0
-- Internal port: 3000
-- Start command: `pnpm start`
-- Health check: `GET /api/health`
-- Canonical domain: `https://microsite.flexbox.web.id`
-- WWW alias: `https://www.microsite.flexbox.web.id`
-- Media host/container path: `/data/flexbox/media`
+- Resource: `flexbox-linktree` (`4fndzksd1vmizwovi2bmvwmf`)
+- Build pack: Nixpacks.
+- Node target: 24 through `NIXPACKS_NODE_VERSION`.
+- Package manager: pnpm 12.18.0 from `packageManager` and frozen lockfile.
+- Internal port: 3000.
+- Build overrides: `pnpm install --frozen-lockfile`,
+  `pnpm db:generate && pnpm build`, and `pnpm start` through official Nixpacks
+  environment variables.
+- Health check: GET `/api/health` on port 3000.
+- Domains configured: `microsite.flexbox.web.id` and
+  `www.microsite.flexbox.web.id`.
+- WWW behavior: `non-www` redirect target configured.
+- Persistent media mount: `/data/flexbox/media` to `/data/flexbox/media`.
+- Auto-deploy and forced HTTPS were not enabled for this provisioning stage.
 
-## Current state
+## Provisioning evidence
 
-- Coolify API health is reachable.
-- Protected API is reachable but unauthenticated in the current automation
-  session because `COOLIFY_API_TOKEN` was not available to that process.
-- No project/environment/server/destination UUIDs were obtained.
-- No application resource was created.
-- A Coolify-managed PostgreSQL 17 resource exists and is healthy, but it still
-  contains only the default `postgres` database and role; the target application
-  database/user are not ready.
-- No environment variables or secrets were sent to Coolify.
-- No deployment was triggered.
+- Application creation returned HTTP 201 with `instant_deploy=false` in the
+  request.
+- Storage creation returned HTTP 201.
+- Environment variable creation/update returned HTTP 201.
+- Application deployment history: count `0`.
+- No application container exists in Docker.
+- No deployment endpoint was called.
 
-## Required provisioning sequence after API authorization
+## Intentionally incomplete production configuration
 
-1. List and verify the target team, project, environment, server, and Docker
-   destination.
-2. Confirm capacity and ensure no duplicate FlexBox resources exist.
-3. Create `flexbox_linktree` and `flexbox_app` through the approved database
-   administration flow, then store the generated role password in Coolify.
-4. Verify database status and internal network without exposing credentials.
-5. Create the Next.js application from `main` with `instant_deploy=false`.
-6. Attach `/data/flexbox/media` using the official application storage endpoint.
-7. Add non-secret configuration and Coolify secret variables.
-8. Validate the resource definitions before any deployment request.
+- `ADMIN_MAIL_TRANSPORT` and `RESEND_API_KEY` were not configured because the
+  Resend sender domain is not verified.
+- `RESEND_SENDER_VERIFIED` remains `false`.
+- Production migration, seed, and administrator bootstrap were not run.
+- HTTPS certificate issuance and public cutover were not performed.
 
-Production migration, DNS/HTTPS cutover, and email delivery remain separately
-gated owner actions. Provisioning is also blocked until the token is securely
-made available to the active automation session.
+The API reports the application status as `exited:unhealthy` while no container
+or deployment exists. This is not treated as a deployment result; the resource
+must be built and deployed only after the remaining preflight and approval gates
+are complete.

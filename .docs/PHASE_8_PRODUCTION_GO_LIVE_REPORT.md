@@ -1,35 +1,38 @@
 # Phase 8 Production Go-Live Report
 
-Status: **BLOCKED**
+Status: **NOT YET DEPLOYED**
 
-The project is not live. No production application resource exists in Coolify;
-the existing PostgreSQL 17 resource is healthy, but no production migration or
-application deployment has been performed.
+## Current state
 
-## Verified prerequisites
-
-- Repository is on `main` and synchronized with `origin/main`.
-- Domain apex and WWW DNS records resolve to the approved target.
-- Docker, Coolify, and Traefik are healthy.
-- Host media directory `/data/flexbox/media` exists with mode `0750` and
-  `root:root` ownership.
-- Node 24/pnpm 12.18.0 application pipeline was previously verified against a
-  disposable PostgreSQL 17 database with 303 tests passing.
+- Coolify project, production environment, destination, PostgreSQL resource,
+  application resource, media mount, and protected environment metadata are
+  provisioned.
+- PostgreSQL 17 is healthy and private; target database and least-privilege
+  role exist.
+- Application deployment history is empty and no application container exists.
+- No production migration, seed, administrator bootstrap, public deployment,
+  HTTPS issuance, DNS change, NAT change, or production email was performed.
 
 ## Blocking prerequisites
 
-- Coolify API token available to the active automation session and authorized
-  resource discovery.
-- PostgreSQL 17 private resource exists, but `flexbox_linktree` and
-  `flexbox_app` plus application connection details are not ready.
-- Official Coolify persistent storage mount for the application.
-- Resend sender-domain verification and provider-issued DNS records.
-- Provider confirmation of NAT TCP 80/443.
-- Dashboard exposure/access-control review for Coolify 8000 and Traefik 8080.
-- Staging deployment and verification.
-- Separate owner approval for production migration, SSL/cutover, and email
-  delivery.
+- Run the repository verification/build pipeline in a Node.js 24 / pnpm
+  12.18.0 build environment.
+- Determine application runtime UID/GID and validate media write/read
+  persistence in an isolated staging deployment.
+- Provide and verify Resend sender-domain credentials before enabling email.
+- Resolve the provider DNS SOA issue and independently confirm TCP 80/443 NAT.
+- Complete staging with an isolated database and media path.
+- Obtain explicit approval for production migration and first public deploy.
+
+## Security status
+
+- PostgreSQL has no public host port.
+- Coolify API token is stored outside Git in a root-only secret file.
+- Application secret values are stored as hidden Coolify environment variables.
+- No secrets, database dumps, media, or runtime files were added to Git.
+- Coolify and Traefik administrative exposure still requires final access-control
+  review; no firewall or SSH change was made.
 
 ## Final status
 
-**NOT YET DEPLOYED — no public production verification is claimed.**
+**PROVISIONED BUT NOT DEPLOYED — no public production verification is claimed.**
