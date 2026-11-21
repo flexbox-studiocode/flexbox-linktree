@@ -40,6 +40,17 @@ No application schema or migration exists in this resource.
 The repository runbook is `.docs/DATABASE_BACKUP_RECOVERY.md` and the backup
 script is `scripts/db-backup.mjs`. No production backup was created.
 
+The local backup directory was prepared without creating an archive:
+
+```text
+/data/flexbox/backups/postgres
+mode: 0700
+owner: root:root
+```
+
+It is on the VPS root filesystem and therefore is not off-site disaster
+protection.
+
 ## Persistent media
 
 The host directory was created because it did not exist:
