@@ -1,21 +1,24 @@
 # Phase 8AD — Public Acceptance Report
 
 Date: 2026-11-21 UTC
-Status: **NOT RUN — PRODUCTION NOT DEPLOYED**
+Status: **PARTIAL PASS — OWNER AUTHENTICATED TEST REQUIRED**
 
 ## Results
 
-- `http://microsite.flexbox.web.id/api/health`: HTTP 503.
-- `https://microsite.flexbox.web.id/api/health`: HTTP 503.
-- `https://www.microsite.flexbox.web.id/api/health`: HTTP 503.
-- HTTPS certificate: Traefik default certificate; hostname validation failed.
+- `https://microsite.flexbox.web.id/`: HTTP 200.
+- `https://microsite.flexbox.web.id/api/health`: HTTP 200; database/storage `ok`.
+- `https://www.microsite.flexbox.web.id/`: redirect to canonical HTTPS.
+- HTTP canonical: redirect to HTTPS.
+- HTTPS certificates: trusted Let's Encrypt certificates for both hostnames.
+- `/robots.txt`, `/sitemap.xml`, and `/admin/login`: HTTP 200.
+- Unauthenticated protected admin routes redirect to `/admin/login`.
 - Public PostgreSQL TCP 5432: not reachable.
-- Admin login, CMS CRUD, media upload, and authenticated acceptance tests: not
-  run because there is no production application container.
+- Owner authenticated login, CMS CRUD, and production media upload tests were
+  not run by automation because the owner password must not be shared in chat.
 
 No email was sent. No production data was created or deleted during testing.
 
 ## Acceptance gate
 
-Production is not live. Repeat all public, authentication, media, and HTTPS
-acceptance tests only after a diagnosed Coolify deployment succeeds.
+The public website is deployed and reachable. The owner must complete the
+authenticated login/CMS/media smoke test manually, without sharing credentials.

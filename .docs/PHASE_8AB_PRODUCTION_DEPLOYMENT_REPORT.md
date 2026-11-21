@@ -1,7 +1,7 @@
 # Phase 8AB — Production Deployment Report
 
 Date: 2026-11-21 UTC
-Status: **BLOCKED — NOT DEPLOYED**
+Status: **PASS — DEPLOYED; PUBLIC ACCEPTANCE IN PROGRESS**
 
 ## Scope
 
@@ -18,21 +18,25 @@ Status: **BLOCKED — NOT DEPLOYED**
 
 1. `emm0gvghvc5gfhwk7rd0hach` — failed at 10:37:13 UTC.
 2. `f1gulmpxlksvahzmdrhrgwev` — failed at 10:40:38 UTC.
+3. `fdgflvggtorjq4pqfuf1gkrj` — finished at 11:10:31 UTC.
 
-Coolify accepted both trigger requests, but both jobs failed within roughly
-four seconds. No production container, image, Traefik router, or application
-runtime was created. Staging was not modified.
+The first two jobs failed within roughly four seconds because Coolify generated
+the invalid repository target
+`https://github.com/https://github.com/flexbox-studiocode/flexbox-linktree`.
+The field was corrected to the GitHub source identifier format used by staging.
+The third deployment cloned the repository, built the Dockerfile, and created
+the healthy production container. Staging was not modified.
 
-The application configuration was checked between attempts. The canonical and
-WWW domains, Dockerfile, port, health path, and media storage remained correct.
-The application-level resolver is now `letsencrypt` and force-HTTPS is enabled.
+The final application configuration is verified with canonical and WWW domains,
+Dockerfile `/Dockerfile`, internal port `3000`, health path `/api/health`,
+media storage, `letsencrypt` resolver, and force-HTTPS enabled.
 
-## Diagnostic blocker
+## Runtime follow-up
 
-The deployment records have no persisted log text. The official application
-logs endpoint returns HTTP 403 because the current API token lacks
-`read:sensitive`. The Coolify service log only records job start/failure, not
-the first failing command. This prevents an evidence-based repair.
+The container is healthy and public health is HTTP 200. Two malformed Next.js
+Server Action errors were observed in runtime logs from external requests. They
+did not affect homepage, health, or admin-login page delivery, but should be
+reviewed before final authenticated acceptance.
 
 ## Safety checks
 
@@ -44,9 +48,7 @@ the first failing command. This prevents an evidence-based repair.
 
 ## Owner action required
 
-Grant the automation token the minimum `read:sensitive` permission, or inspect
-the deployment log in Coolify and provide the first failing stage. Do not send
-the token or any secret in chat. After the first failing stage is available,
-perform one diagnosed correction and one controlled retry.
+Log in manually at `/admin/login` and perform the approved CMS/media smoke test.
+Do not send the administrator password or session data in chat.
 
 Reference: [Coolify application logs API](https://coolify.io/docs/api/endpoints/applications/get-application-logs-by-uuid).

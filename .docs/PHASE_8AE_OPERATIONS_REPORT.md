@@ -1,7 +1,7 @@
 # Phase 8AE — Operations Report
 
 Date: 2026-11-21 UTC
-Status: **BLOCKED — PRE-LIVE OPERATIONS**
+Status: **PASS WITH FOLLOW-UP — DEPLOYED**
 
 ## Verified
 
@@ -12,21 +12,22 @@ Status: **BLOCKED — PRE-LIVE OPERATIONS**
 - Production media directory remains persistent, owned by UID/GID 1000:1000,
   mode 0750.
 - Mail remains disabled; no Resend key was added and no email was sent.
+- Production container has zero restarts and is healthy.
+- Runtime UID/GID is `1000:1000`; persistent media mount is writable.
 
 ## Not yet verified
 
-- Production container health and restart behavior.
-- Production health endpoint through the router.
-- Production Traefik router and certificate.
-- Production admin session and CMS workflows.
-- Production media persistence after redeploy.
+- Production admin session and CMS workflows still require owner-authenticated
+  verification.
+- Media persistence after a future redeploy should be rechecked during normal
+  operations.
 
-## Operational blocker
+## Operational follow-up
 
-Two Coolify deployment jobs failed before container creation. Detailed
-application logs require an API token with `read:sensitive`; the current token
-does not have that ability. No further deployment retry is recommended until
-the first failing stage is available.
+Two initial Coolify jobs failed because of the malformed repository URL. The
+third deployment succeeded. Two malformed Next.js Server Action errors were
+observed from external requests; they did not prevent health or page delivery
+but remain a log-quality follow-up.
 
 No cleanup was performed. Existing staging, database, volumes, media, and
 backups were preserved.

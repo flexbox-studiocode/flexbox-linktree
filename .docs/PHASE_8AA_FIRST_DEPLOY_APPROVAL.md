@@ -1,6 +1,6 @@
 # Phase 8AA — First Production Deployment Approval
 
-Status: OWNER APPROVAL GRANTED — DEPLOYMENT ATTEMPTED, BLOCKED
+Status: OWNER APPROVAL GRANTED — DEPLOYED, ACCEPTANCE IN PROGRESS
 
 ## Deployment plan
 
@@ -20,14 +20,13 @@ Status: OWNER APPROVAL GRANTED — DEPLOYMENT ATTEMPTED, BLOCKED
 
 ## Capacity and risks
 
-- Approximately 9.8 GB disk available and 1.9 GB memory available at the
+- Approximately 9.0 GB disk available and 1.7 GB memory available at the
   latest audit.
 - The 2 vCPU / 4 GB VPS is adequate for the existing staging footprint, but
   the first production build may temporarily increase CPU, RAM, and disk use.
-- Production currently has no container, so the domain returns the proxy
-  fallback/503 until deployment creates the upstream.
-- HTTPS currently presents the Traefik default certificate and requires
-  post-deployment ACME verification.
+- Production container is running healthy and the public domain has an active
+  upstream.
+- HTTPS has trusted Let's Encrypt certificates for canonical and WWW.
 
 ## Rollback
 
@@ -44,26 +43,25 @@ The owner explicitly approved the first production deployment in the current
 execution request. The existing application resource was used; no duplicate
 resource was created.
 
-Two deployment attempts were made through the official Coolify API:
+Three deployment attempts were made through the official Coolify API:
 
 - `emm0gvghvc5gfhwk7rd0hach` — `failed` at 2026-11-21 10:37:13 UTC.
 - `f1gulmpxlksvahzmdrhrgwev` — `failed` at 2026-11-21 10:40:38 UTC.
+- `fdgflvggtorjq4pqfuf1gkrj` — `finished` at 2026-11-21 11:10:31 UTC.
 
-Both jobs stopped before a production container was created. The production
-application remains not deployed. The application log endpoint returned HTTP
-403 because the current API token lacks `read:sensitive`; the deployment
-records contain no persisted log text. The Coolify container log confirms the
-job starts and fails within approximately four seconds.
+The first two jobs stopped before a production container was created. The
+application log endpoint became readable after `read:sensitive` was granted and
+confirmed the malformed repository target. The third deployment completed with
+a healthy production container and public health HTTP 200.
 
 Before the second attempt, the application-level Traefik resolver was changed
 from `none` to `letsencrypt` and force-HTTPS was enabled through the documented
 application update endpoint. The change was verified, but it did not resolve
-the early deployment failure.
+the early deployment failure. The repository field was then corrected to
+`flexbox-studiocode/flexbox-linktree`, matching staging.
 
-## Current gate
+## Remaining gate
 
-Deployment remains blocked pending detailed Coolify deployment logs. The owner
-must either grant the existing automation token the minimum `read:sensitive`
-ability, or inspect the deployment log in the Coolify dashboard and provide the
-first failing stage. No third deployment retry should be made without that
-evidence.
+Owner-authenticated CMS and media smoke tests remain. Two malformed Next.js
+Server Action errors were observed from external requests; they did not prevent
+page delivery or health checks and remain a runtime-log follow-up.

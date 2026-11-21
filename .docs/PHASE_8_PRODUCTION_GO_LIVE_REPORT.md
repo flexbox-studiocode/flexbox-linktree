@@ -1,6 +1,6 @@
 # Phase 8 Production Go-Live Report
 
-Status: **BLOCKED — DEPLOYMENT FAILED, NOT LIVE**
+Status: **DEPLOYED BUT NOT FULLY VERIFIED**
 
 ## Current state
 
@@ -29,10 +29,10 @@ Status: **BLOCKED — DEPLOYMENT FAILED, NOT LIVE**
 - Phase 8Y administrator bootstrap completed successfully: one active
   `SUPER_ADMIN`, Argon2id password hash, one `ACCOUNT_BOOTSTRAPPED` event, and
   bootstrap flag disabled. No email was sent.
-- Production deployment history contains two failed attempts and no production
-  application container exists.
-- No production seed, public deployment, HTTPS issuance, DNS change, NAT
-  change, or production email was performed.
+- Production deployment history contains two failed attempts followed by one
+  successful deployment. The production container is running and healthy.
+- No production seed, DNS change, NAT change, or production email was
+  performed.
 
 ## Completed readiness work
 
@@ -54,15 +54,10 @@ Status: **BLOCKED — DEPLOYMENT FAILED, NOT LIVE**
   staging.
 - Provide and verify Resend sender-domain credentials before enabling email;
   email remains disabled for this release.
-- Detailed Coolify deployment output is required before another deploy retry;
-  public HTTPS currently has no usable certificate because no production
-  router exists.
-- Obtain detailed deployment output. The current Coolify API token can trigger
-  deployment and read resource metadata, but `GET /applications/{uuid}/logs`
-  is denied with HTTP 403 because `read:sensitive` is not granted. Coolify's
-  official API documentation requires `read:sensitive` or a root token for
-  application logs.
-- Do not retry deployment until the first failing stage is known.
+- Owner-authenticated login, CMS CRUD, and media smoke tests remain to be
+  completed manually without sharing the administrator password.
+- Two malformed Next.js Server Action errors were observed in runtime logs and
+  should be reviewed before final operational sign-off.
 
 ## Security status
 
@@ -81,18 +76,16 @@ Status: **BLOCKED — DEPLOYMENT FAILED, NOT LIVE**
 - Current authoritative nameservers are the `b/c/d/e/f.dns.id` servers and
   the SOA is served by `b.dns.id`; the previous malformed SOA was not
   reproduced.
-- Deployment `emm0gvghvc5gfhwk7rd0hach` failed before a container was created.
-- After the documented Traefik resolver correction, deployment
-  `f1gulmpxlksvahzmdrhrgwev` also failed before a container was created.
-- Public HTTP and HTTPS return HTTP 503 with the Coolify "Site not available"
-  page because no production upstream container is deployed.
-  HTTPS presents `TRAEFIK DEFAULT CERT`, not a valid microsite certificate;
-  these results are not treated as application success.
+- Deployment `fdgflvggtorjq4pqfuf1gkrj` finished successfully.
+- Public canonical HTTPS returns HTTP 200 and `/api/health` reports database and
+  storage `ok`.
+- HTTPS certificates are trusted Let's Encrypt certificates and HTTP/WWW
+  redirects are correct.
 - No firewall, NAT, SSH, DNS, or management-port change was made.
 
 ## Final status
 
-**STAGING ACCEPTED INTERNALLY; PRODUCTION DEPLOYMENT BLOCKED — no public
-production verification is claimed.**
+**PRODUCTION DEPLOYED AND PUBLICLY REACHABLE; FULL AUTHENTICATED ACCEPTANCE AND
+RUNTIME-ERROR FOLLOW-UP REMAIN.**
 
 Detailed evidence is maintained in the Phase 8J–8T reports.
