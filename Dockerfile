@@ -34,4 +34,6 @@ USER node
 
 EXPOSE 3000
 
-CMD ["pnpm", "start"]
+# Equivalent to `pnpm start`, without a package-manager download or lockfile
+# write in the non-root runtime container.
+CMD ["node", "node_modules/next/dist/bin/next", "start"]
