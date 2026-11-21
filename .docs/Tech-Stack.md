@@ -21,7 +21,7 @@
 | Container | Docker 29.8.2 / Compose 5.5.1 locally | Selected | Local PostgreSQL |
 | VPS deployment | Coolify | Planned, not implemented | Future application deployment and service management |
 
-Version policy is validated against official package compatibility metadata and documentation checked during Phase 0: Next.js 16.4.6 requires Node.js >=20.9.0 and supports React 19. Prisma 7.10.1's install scripts explicitly support Node.js 20.19+, 22.12+, and 24+. The project uses the current Active LTS Node.js 26.13.0 (codename Lithium); Next.js supports it and Prisma CLI was successfully run on it. The `.nvmrc` file and `package.json` engines pin the Node 26 major. Node 24 is an officially supported Prisma alternative; do not downgrade the owner's machine automatically.
+Version policy is validated against official package compatibility metadata and documentation checked during Phase 0: Next.js 16.4.6 requires Node.js >=20.9.0 and supports React 19. Prisma 7.10.1's install scripts explicitly support Node.js 20.19+, 22.12+, and 24+. Production and CI use Node.js 24, declared by `.nvmrc` and supported by the `package.json` engines. The owner's local machine may continue using Node.js 26 because it satisfies the >=24 floor; changing a machine-wide runtime is outside deployment preparation.
 
 pnpm is pinned at `12.18.0` through the `packageManager` field in `package.json`, with Corepack as the optional version activation mechanism. Use exact dependency versions and commit `pnpm-lock.yaml`. `package.json` `engines` declares the supported Node range. Do not copy version numbers from old tutorials without checking compatibility between framework, Node.js, Prisma, Auth.js, Tailwind CSS, and the deployment runtime. Review release notes before upgrades.
 
@@ -72,7 +72,7 @@ OAuth with a Prisma adapter and database sessions remains an option for a later 
 - `src/proxy.ts` — optimistic early gate only; it verifies the JWT and redirects, and is never the authorization check.
 - `src/lib/auth/cookies.ts` derives `__Secure-`/`__Host-` cookie names from `NEXTAUTH_URL` or `VERCEL`. NextAuth v4 reads `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, and `AUTH_SECRET`; `AUTH_URL` is only a fallback for building reset links.
 
-**Password hashing:** `@node-rs/argon2@2.2.2` with Argon2id, `m = 19456` KiB, `t = 2`, `p = 1`, 32-byte output. Chosen over the `argon2` package because it ships prebuilt N-API binaries, so `pnpm install` needs no node-gyp or Visual Studio build tools on Node 26 / Windows. The hash format is standard Argon2id (`$argon2id$...`), so switching implementations later does not require rehashing; sign-in rehashes only when the parameter set changes.
+**Password hashing:** `@node-rs/argon2@2.2.2` with Argon2id, `m = 19456` KiB, `t = 2`, `p = 1`, 32-byte output. Chosen because it ships prebuilt N-API binaries for the supported Node.js runtimes, so `pnpm install` needs no node-gyp or Visual Studio build tools. The hash format is standard Argon2id (`$argon2id$...`), so switching implementations later does not require rehashing; sign-in rehashes only when the parameter set changes.
 
 **Authorization decision:** authentication is not authorization. A valid JWT grants nothing by itself; `resolveAuthorizedAdmin()` requires an `ACTIVE` `SUPER_ADMIN` row whose `auth_version` still matches the token's `av`. See `.docs/AUTH_SECURITY.md`.
 
@@ -131,7 +131,7 @@ Add tooling intentionally and document every script in `package.json`.
 | Operating system | Windows |
 | Editor | VS Code |
 | Shell | PowerShell |
-| Node.js | 26.x Active LTS (`.nvmrc`), floor 24 |
+| Node.js | 24.x deployment target (`.nvmrc`), floor 24 |
 | Package manager | pnpm 12.18.0 (pinned in `package.json`) |
 | Next.js dev server | Runs directly on Windows host |
 | PostgreSQL | Docker Desktop / WSL2 container |

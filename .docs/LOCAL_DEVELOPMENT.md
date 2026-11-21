@@ -23,12 +23,19 @@ PostgreSQL does not need to be installed on the host. It runs in Docker.
 
 ## 2. Node.js and pnpm Version Policy
 
-- Project Node.js major: **26** (declared in `.nvmrc`).
-- Supported floor: **24**. Next.js requires >= 20.9.0. Prisma 7 install scripts list Node 20.19+, 22.12+, and 24+; Node 26 is the current Active LTS and was verified working with the Prisma 7.10.1 CLI.
+- Deployment Node.js major: **24** (declared in `.nvmrc`). The owner's local
+  machine currently uses Node.js 26.13.0, which is above the supported floor
+  and remains valid for local development.
+- Supported floor: **24**. Next.js requires >= 20.9.0. Prisma 7 install scripts
+  list Node 20.19+, 22.12+, and 24+; both Node 24 and the owner's local Node 26
+  were verified with the Prisma 7.10.1 CLI.
 - pnpm is pinned to `12.18.0` through the `packageManager` field in `package.json`.
 - `package.json` `engines` declares the supported Node range.
 
-Do not downgrade or change the machine-wide Node.js or pnpm installation to match the project. If a future dependency genuinely rejects Node 26, record the finding in `.docs/Tech-Stack.md` and decide it explicitly instead of silently switching versions.
+Do not downgrade or change the machine-wide Node.js or pnpm installation to
+match the deployment target. If a future dependency genuinely rejects Node 24
+or Node 26, record the finding in `.docs/Tech-Stack.md` and decide it explicitly
+instead of silently switching versions.
 
 Optional, in a per-project shell only:
 

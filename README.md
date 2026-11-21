@@ -68,7 +68,7 @@ Exact versions, version policy, and compatibility notes are recorded in `.docs/T
 
 ## Prerequisites
 
-- Node.js 26 LTS (the local machine reports v26.13.0; Node 24+ is the supported floor).
+- Node.js 24 deployment target (the local machine may use Node.js 26 because Node 24+ is the supported floor).
 - pnpm 12.18.0 (pinned through `packageManager`; enable with Corepack where available).
 - Docker Desktop with the Linux engine and WSL2.
 - Git.
