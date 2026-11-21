@@ -1,6 +1,6 @@
 # Phase 8AA — First Production Deployment Approval
 
-Status: OWNER APPROVAL REQUIRED
+Status: OWNER APPROVAL GRANTED — DEPLOYMENT ATTEMPTED, BLOCKED
 
 ## Deployment plan
 
@@ -38,8 +38,32 @@ Status: OWNER APPROVAL REQUIRED
 - Revert application code/configuration through Coolify/Git only after root
   cause analysis.
 
-## Approval gate
+## Execution result
 
-The migration and administrator bootstrap approvals do not authorize the first
-public production deployment. Approve the existing Coolify application
-deployment explicitly before triggering it.
+The owner explicitly approved the first production deployment in the current
+execution request. The existing application resource was used; no duplicate
+resource was created.
+
+Two deployment attempts were made through the official Coolify API:
+
+- `emm0gvghvc5gfhwk7rd0hach` — `failed` at 2026-11-21 10:37:13 UTC.
+- `f1gulmpxlksvahzmdrhrgwev` — `failed` at 2026-11-21 10:40:38 UTC.
+
+Both jobs stopped before a production container was created. The production
+application remains not deployed. The application log endpoint returned HTTP
+403 because the current API token lacks `read:sensitive`; the deployment
+records contain no persisted log text. The Coolify container log confirms the
+job starts and fails within approximately four seconds.
+
+Before the second attempt, the application-level Traefik resolver was changed
+from `none` to `letsencrypt` and force-HTTPS was enabled through the documented
+application update endpoint. The change was verified, but it did not resolve
+the early deployment failure.
+
+## Current gate
+
+Deployment remains blocked pending detailed Coolify deployment logs. The owner
+must either grant the existing automation token the minimum `read:sensitive`
+ability, or inspect the deployment log in the Coolify dashboard and provide the
+first failing stage. No third deployment retry should be made without that
+evidence.
