@@ -1,6 +1,6 @@
 # Phase 8 Production Go-Live Report
 
-Status: **NOT YET DEPLOYED**
+Status: **BLOCKED — NOT YET DEPLOYED**
 
 ## Current state
 
@@ -9,19 +9,29 @@ Status: **NOT YET DEPLOYED**
   provisioned.
 - PostgreSQL 17 is healthy and private; target database and least-privilege
   role exist.
-- Application deployment history is empty and no application container exists.
+- A separate Coolify staging environment, staging database/role, staging
+  application resource, and staging media mount were provisioned in Phase 8J–8L.
+- Production deployment history is empty and no production application
+  container exists.
 - No production migration, seed, administrator bootstrap, public deployment,
   HTTPS issuance, DNS change, NAT change, or production email was performed.
 
+## Completed readiness work
+
+- Repository checks passed in Node.js 24 / pnpm 12.18.0:
+  `pnpm install --frozen-lockfile`, lint, typecheck, Prisma validation,
+  configuration preflight, build, and 28 test files / 304 tests.
+- Production-safe no-email mode is implemented and tested. Resend remains
+  disabled until sender-domain verification.
+- Existing production backup checksum and custom archive listing were verified.
+
 ## Blocking prerequisites
 
-- Run the repository verification/build pipeline in a Node.js 24 / pnpm
-  12.18.0 build environment.
+- Deploy and accept the isolated staging resource.
 - Determine application runtime UID/GID and validate media write/read
-  persistence in an isolated staging deployment.
+  persistence in staging.
 - Provide and verify Resend sender-domain credentials before enabling email.
-- Resolve the provider DNS SOA issue and independently confirm TCP 80/443 NAT.
-- Complete staging with an isolated database and media path.
+- Resolve provider DNS/SOA and independently confirm TCP 80/443 NAT.
 - Obtain explicit approval for production migration and first public deploy.
 
 ## Security status
@@ -35,21 +45,18 @@ Status: **NOT YET DEPLOYED**
 
 ## Read-only public/network follow-up
 
-- Public resolvers `1.1.1.1` and `8.8.8.8` returned A
+- Earlier public resolver checks recorded A
   `microsite.flexbox.web.id -> 217.216.146.40` and CNAME
   `www.microsite.flexbox.web.id -> microsite.flexbox.web.id`.
-- Authoritative NS remain `ns1.dnama.id` and `ns2.dnama.id`.
-- The zone SOA still reports `a.misconfigured.dns.server.invalid` and must be
-  corrected by the DNS provider.
-- A request to the public HTTP hostname returned `404 Not Found`; this is not
-  treated as an application success because no deployment/container exists.
-- HTTPS returned no certificate and the TLS handshake failed. SSL is therefore
-  not ready and no live claim is made.
-- Local Coolify port 8000 returned the expected login redirect. No firewall,
-  NAT, SSH, DNS, or management-port change was made. Provider mapping for
-  public management access and TCP 80/443 still requires independent provider
-  confirmation.
+- Authoritative NS were recorded as `ns1.dnama.id` and `ns2.dnama.id`.
+- The earlier zone SOA reported `a.misconfigured.dns.server.invalid`; this
+  remains an external provider action until independently rechecked.
+- A public HTTP 404 and failed HTTPS handshake were correctly not treated as
+  application success because no production deployment/container exists.
+- No firewall, NAT, SSH, DNS, or management-port change was made.
 
 ## Final status
 
 **PROVISIONED BUT NOT DEPLOYED — no public production verification is claimed.**
+
+Detailed evidence is maintained in the Phase 8J–8T reports.

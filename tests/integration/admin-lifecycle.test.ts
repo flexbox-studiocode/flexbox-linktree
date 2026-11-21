@@ -271,6 +271,26 @@ describe.skipIf(!database)("administrator account lifecycle (local database)", (
     await expect(prisma.passwordResetToken.count()).resolves.toBe(before);
   });
 
+  it("marks password recovery unavailable without creating a token when email is disabled", async () => {
+    const { requestPasswordReset } = await import("@/features/auth/services/password-reset");
+    const admin = await createActiveAdmin("reset-mail-disabled");
+    const before = await prisma.passwordResetToken.count();
+
+    process.env.ADMIN_MAIL_TRANSPORT = "disabled";
+
+    try {
+      await expect(requestPasswordReset({ email: admin.normalizedEmail }, null)).resolves.toEqual({
+        status: "disabled",
+      });
+      await expect(requestPasswordReset({ email: uniqueEmail("reset-mail-disabled-unknown") }, null)).resolves.toEqual({
+        status: "disabled",
+      });
+      await expect(prisma.passwordResetToken.count()).resolves.toBe(before);
+    } finally {
+      process.env.ADMIN_MAIL_TRANSPORT = "file";
+    }
+  });
+
   it("throttles repeated recovery requests from one source", async () => {
     const { requestPasswordReset, resetSourceBucket } = await import(
       "@/features/auth/services/password-reset"

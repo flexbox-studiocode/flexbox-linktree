@@ -89,6 +89,13 @@ export async function requestPasswordResetAction(
     };
   }
 
+  if (outcome.status === "disabled") {
+    return {
+      status: "error",
+      message: "Pemulihan melalui email sedang dinonaktifkan. Gunakan operator CLI untuk pemulihan akun.",
+    };
+  }
+
   // Non-enumerating: identical whether or not the address exists.
   return {
     status: "success",

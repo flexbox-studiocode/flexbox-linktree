@@ -161,7 +161,7 @@ Phase 4 variable rules:
 - `RATE_LIMIT_SECRET` is a dedicated HMAC key for source throttle buckets and must differ from the session secret, so rotating one does not weaken the other.
 - `TRUST_PROXY_HEADERS="true"` only behind a proxy that overwrites `x-forwarded-for`; otherwise forwarded values are ignored.
 - `ADMIN_BOOTSTRAP_ENABLED`, `ADMIN_BOOTSTRAP_EMAIL`, and `ADMIN_BOOTSTRAP_NAME` are only read by `pnpm admin:bootstrap`, which refuses to run once any administrator exists.
-- `ADMIN_MAIL_TRANSPORT="file"` selects the development file transport under `.local-storage/mail/`. Production has no approved transport yet and the mailer refuses to run.
+- `ADMIN_MAIL_TRANSPORT="file"` selects the development file transport under `.local-storage/mail/`. Production may use verified Resend or the explicit `disabled` mode; disabled mode keeps the public site available while making password recovery unavailable and requiring private token handoff for invitations.
 
 `AUTH_URL` is not required for the current local setup. Auth.js v4 derives the URL from the request in development; add an explicit `AUTH_URL` only when the deployment topology requires it.
 

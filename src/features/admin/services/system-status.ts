@@ -162,10 +162,21 @@ export async function getSystemStatus(): Promise<SystemStatus> {
   const mailTransport = process.env.ADMIN_MAIL_TRANSPORT ?? (process.env.NODE_ENV === "production" ? "" : "file");
   checks.push({
     label: "Transport email admin",
-    state: mailTransport === "file" ? (process.env.NODE_ENV === "production" ? "error" : "warning") : mailTransport ? "ok" : "warning",
+    state:
+      mailTransport === "file"
+        ? process.env.NODE_ENV === "production"
+          ? "error"
+          : "warning"
+        : mailTransport === "disabled"
+          ? "warning"
+          : mailTransport
+            ? "ok"
+            : "warning",
     detail:
       mailTransport === "file"
         ? "Transport berkas pengembangan: email tidak benar-benar terkirim."
+        : mailTransport === "disabled"
+          ? "Email dinonaktifkan; pemulihan email tidak tersedia dan undangan harus memakai handoff token privat."
         : mailTransport
           ? `Transport aktif: ${mailTransport}.`
           : "Belum ada transport produksi; pemulihan kata sandi produksi belum beroperasi.",

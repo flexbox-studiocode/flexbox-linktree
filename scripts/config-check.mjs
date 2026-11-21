@@ -288,6 +288,11 @@ if (production) {
       ok("EMAIL_FROM", sender);
     }
     ok("ADMIN_MAIL_TRANSPORT", "resend");
+  } else if (mailTransport === "disabled") {
+    warn(
+      "ADMIN_MAIL_TRANSPORT",
+      "disabled; password recovery is unavailable and invitations require the private CLI/token handoff",
+    );
   } else {
     error("ADMIN_MAIL_TRANSPORT", `unsupported production transport: ${mailTransport}; use resend or implement a provider`);
   }

@@ -10,7 +10,7 @@ import {
 import { parseEmail } from "@/features/auth/schemas/identity";
 import { recordSecurityEvent } from "@/features/auth/services/security-event";
 import { checkSourceAllowed, recordSourceAttempt, sourceBucketKey } from "@/features/auth/services/rate-limit";
-import { getAdminMailer } from "@/lib/mail/admin-mailer";
+import { getAdminMailer, isAdminMailDisabled } from "@/lib/mail/admin-mailer";
 import { checkPasswordPolicy, hashPassword } from "@/lib/security/password";
 import { generateOpaqueToken, hashOpaqueToken } from "@/lib/security/tokens";
 
@@ -43,6 +43,7 @@ export type ResetRequestInput = {
 
 export type ResetRequestOutcome =
   | { status: "accepted" }
+  | { status: "disabled" }
   | { status: "throttled"; retryAfterSeconds: number };
 
 /** Builds the absolute reset link. `NEXTAUTH_URL` is required for a usable URL. */
@@ -65,6 +66,12 @@ export async function requestPasswordReset(
   }
 
   await recordSourceAttempt({ sourceBucketKey: sourceBucketHash, now });
+
+  // Keep recovery non-enumerating while making the disabled capability
+  // explicit to the caller. No token or account lookup is performed.
+  if (isAdminMailDisabled()) {
+    return { status: "disabled" };
+  }
 
   // Malformed input is treated exactly like an unknown address.
   let normalizedEmail: string | null = null;

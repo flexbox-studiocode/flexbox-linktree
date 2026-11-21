@@ -128,7 +128,7 @@ Optional development controls:
 | Variable | Purpose |
 |---|---|
 | `TRUST_PROXY_HEADERS` | Keep `false` locally; enable only behind a trusted proxy |
-| `ADMIN_MAIL_TRANSPORT` | Set `file` to write recovery mail under `.local-storage/mail/` |
+| `ADMIN_MAIL_TRANSPORT` | Set `file` to write recovery mail under `.local-storage/mail/`; production may use explicit `disabled` mode |
 | `ADMIN_BOOTSTRAP_ENABLED` | Temporarily set `true` for the one-time first-admin CLI |
 | `ADMIN_BOOTSTRAP_EMAIL`, `ADMIN_BOOTSTRAP_NAME` | Identity values consumed by the bootstrap CLI |
 | `MEDIA_STORAGE_DRIVER` | Keep the default `local` for development; production requires `s3` |

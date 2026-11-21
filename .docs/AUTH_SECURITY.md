@@ -174,14 +174,14 @@ Known limitations, accepted for Phase 4:
 | `TRUST_PROXY_HEADERS` | No | `true` only behind a proxy that overwrites forwarded headers |
 | `ADMIN_BOOTSTRAP_ENABLED` | No | `true` enables the one-time bootstrap CLI |
 | `ADMIN_BOOTSTRAP_EMAIL`, `ADMIN_BOOTSTRAP_NAME` | No | Bootstrap identity |
-| `ADMIN_MAIL_TRANSPORT` | No | `file` selects the development file transport |
+| `ADMIN_MAIL_TRANSPORT` | No | `file` selects development files; production `disabled` explicitly disables email recovery and requires private token handoff for invitations |
 | `MEDIA_STORAGE_DRIVER`, `S3_*` | No | Phase 5 media storage; see `.docs/ADMIN_CMS.md` |
 
 Rotating `NEXTAUTH_SECRET` invalidates all sessions. Rotating `RATE_LIMIT_SECRET` resets source buckets, which is acceptable during an incident and should be deliberate otherwise.
 
 ## 11. Mail transport
 
-`src/lib/mail/admin-mailer.ts` defines an `AdminMailer` interface with one implementation: a JSON file writer under `.local-storage/mail/` (git-ignored, mode `0600`). It is selected when `ADMIN_MAIL_TRANSPORT=file` or outside production. In production with no transport configured it throws, and the caller still answers with the generic response while recording the failure.
+`src/lib/mail/admin-mailer.ts` defines an `AdminMailer` interface with a JSON file writer under `.local-storage/mail/` (git-ignored, mode `0600`), a Resend transport, and an explicit disabled transport. `ADMIN_MAIL_TRANSPORT=disabled` never writes or sends mail; password recovery is reported unavailable without creating a reset token, while invitations require a private CLI/token handoff. In production with no transport configured it throws, and the caller still answers with the generic response while recording the failure.
 
 Adding a real provider means implementing the interface and returning it from `getAdminMailer()`; no call site changes.
 

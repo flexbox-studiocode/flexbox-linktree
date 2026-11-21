@@ -42,7 +42,7 @@ over values in `--env-file`. Do not pass secrets as command-line values.
 | `S3_REGION` | Recommended | Defaults to `us-east-1`; set explicit provider region. |
 | `S3_ENDPOINT` | Conditional | Required for non-AWS S3-compatible storage. Use HTTPS endpoint. |
 | `S3_PUBLIC_URL` | Conditional | Public media origin only if assets are served through a public URL/CDN. |
-| `ADMIN_MAIL_TRANSPORT` | Yes | Use `resend` with `RESEND_API_KEY` and a verified `EMAIL_FROM`; `file` is development-only. |
+| `ADMIN_MAIL_TRANSPORT` | Yes | Use `resend` with `RESEND_API_KEY` and a verified `EMAIL_FROM`; `disabled` is an explicit no-email launch mode; `file` is development-only. |
 | `ANALYTICS_RAW_RETENTION_DAYS` | Optional | Code default 90 days; approved range 1–365. Must match privacy decision. |
 | `ANALYTICS_AGGREGATE_RETENTION_DAYS` | Optional | Code default 400 days; approved range 90–1095. |
 | `TRUST_PROXY_HEADERS` | Conditional | Set `true` only behind a trusted proxy that overwrites `x-forwarded-for` and `x-real-ip`; otherwise leave unset. |
@@ -63,6 +63,9 @@ Set `NODE_ENV=production` through the process manager/runtime. Never use
 - [ ] Verify the Resend sender domain and test the provider in staging for
   invitation and password recovery. Production requires
   `ADMIN_MAIL_TRANSPORT=resend` and `RESEND_SENDER_VERIFIED=true`.
+- [ ] If Resend is intentionally deferred, set
+  `ADMIN_MAIL_TRANSPORT=disabled`, confirm password recovery is unavailable,
+  and use the private CLI/token handoff for administrator invitations.
 - [ ] Run login lockout, `authVersion` revocation, reset-token expiry, and
   self-lockout tests against staging.
 

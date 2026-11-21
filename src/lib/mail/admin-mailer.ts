@@ -55,6 +55,26 @@ export function createFileMailer(directory: string = MAIL_DIRECTORY): AdminMaile
   };
 }
 
+/**
+ * Explicit production-safe no-email transport.
+ *
+ * This mode never writes or sends a message. Callers must inspect
+ * `delivered=false` and present the affected workflow as unavailable or use
+ * the documented private CLI path for invitations.
+ */
+export function createDisabledMailer(): AdminMailer {
+  return {
+    name: "disabled",
+    async send() {
+      return { delivered: false };
+    },
+  };
+}
+
+export function isAdminMailDisabled(): boolean {
+  return process.env.ADMIN_MAIL_TRANSPORT === "disabled";
+}
+
 export function createResendMailer(
   apiKey = process.env.RESEND_API_KEY,
   from = process.env.EMAIL_FROM,
@@ -100,6 +120,10 @@ export function createResendMailer(
  * answers with the generic, non-enumerating message.
  */
 export function getAdminMailer(): AdminMailer {
+  if (isAdminMailDisabled()) {
+    return createDisabledMailer();
+  }
+
   if (process.env.ADMIN_MAIL_TRANSPORT === "file") {
     return createFileMailer();
   }
