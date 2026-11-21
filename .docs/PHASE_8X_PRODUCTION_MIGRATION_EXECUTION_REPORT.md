@@ -54,7 +54,7 @@ No migration SQL was edited, created, reset, or run against production.
 - Restore verification into a disposable PostgreSQL 17 instance: PASS.
 - Previous backups were preserved.
 
-## Migration execution blocker
+## Migration execution blocker and safe resolution
 
 The required production `DATABASE_URL` is stored as a protected Coolify
 environment variable with `is_shown_once=true`. Coolify's API/response does
@@ -67,6 +67,15 @@ the application password, reading Coolify's internal database, or changing
 the production secret would violate the execution safety requirements and was
 not attempted.
 
+A root-only owner-run helper was prepared at
+`/root/.config/flexbox/phase8x-migrate-secure.sh` (mode 0700). It reads the
+existing production URL from hidden stdin, rejects staging/Coolify/localhost
+targets, passes the URL to a child shell through stdin rather than Docker
+arguments or an environment-at-create-time, runs Node.js 24 with pnpm
+12.18.0 on the `coolify` network, redacts connection URLs in output, and
+removes its temporary dependency volume on exit. The helper itself contains
+no credential.
+
 ## Not run
 
 - `pnpm db:migrate:deploy` — NOT RUN.
@@ -77,11 +86,16 @@ not attempted.
 
 ## Required owner action
 
-Provide an approved secure execution context that injects the existing
-production `DATABASE_URL` without displaying or persisting it, for example an
-owner-run Coolify/one-off migration command with protected environment
-injection. Once that context is available, rerun the final target check and
-execute only:
+Run the prepared helper directly on the VPS, using the existing production
+`DATABASE_URL` from the Coolify secret store or the owner's secure password
+manager. Do not paste the URL into chat:
+
+```text
+/root/.config/flexbox/phase8x-migrate-secure.sh
+```
+
+Once that owner-run command completes successfully, rerun the final target
+check and execute only:
 
 ```text
 pnpm db:migrate:deploy
