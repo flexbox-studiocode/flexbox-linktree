@@ -1,0 +1,22 @@
+# Keep the Coolify/Nixpacks build deterministic with the repository's pinned
+# package manager. The generated provider plan otherwise invokes `pnpm` before
+# Corepack has activated the version declared by package.json.
+
+[variables]
+NIXPACKS_NODE_VERSION = "24"
+
+[phases.install]
+cmds = [
+  "corepack enable",
+  "corepack prepare pnpm@12.18.0 --activate",
+  "pnpm install --frozen-lockfile",
+]
+
+[phases.build]
+cmds = [
+  "pnpm db:generate",
+  "pnpm build",
+]
+
+[start]
+cmd = "pnpm start"
